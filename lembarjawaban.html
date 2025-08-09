@@ -1,27 +1,37 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Lembar Jawaban Online</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
+      width: 100%;
       height: 100%;
-      overflow: hidden;
+    }
+    .iframe-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: auto;
     }
     iframe {
       border: none;
-      width: 100vw;
-      height: 100vh;
-      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
     }
   </style>
 </head>
 <body>
-  <iframe src="https://script.google.com/macros/s/AKfycbwzy_905CdFHSTGiUCcOaCHGQFNMynGQlRV55fLQE_l1gonbD-qde1xQUFfTE_-LIz0Zg/exec" 
-          allowfullscreen
-          sandbox="allow-scripts allow-same-origin allow-forms"
-          ></iframe>
+  <div class="iframe-container">
+    <iframe src="https://script.google.com/macros/s/AKfycbwzy_905CdFHSTGiUCcOaCHGQFNMynGQlRV55fLQE_l1gonbD-qde1xQUFfTE_-LIz0Zg/exec" 
+            allowfullscreen
+            sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+  </div>
 </body>
 </html>
