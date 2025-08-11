@@ -52,82 +52,18 @@
 
     <!-- Main Content -->
     <div class="container mx-auto px-6 py-8">
-        <!-- Setup Screen -->
-        <div id="setup-screen" class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-xl shadow-lg p-8">
-                <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Setup Google Sheets Integration</h2>
-                    <p class="text-gray-600">Konfigurasi koneksi ke Google Sheets untuk sistem asesmen</p>
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="max-w-md mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div class="loading w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Configuration Form -->
-                    <div class="space-y-6">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">🔧 Konfigurasi Sistem</h3>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Google Apps Script URL:</label>
-                            <input type="url" id="apps-script-url" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                                   placeholder="https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec">
-                            <p class="text-xs text-gray-500 mt-1">URL dari Google Apps Script yang sudah di-deploy</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Spreadsheet ID:</label>
-                            <input type="text" id="spreadsheet-id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                                   placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
-                            <p class="text-xs text-gray-500 mt-1">ID dari Google Spreadsheet (dari URL)</p>
-                        </div>
-
-                        <div class="flex gap-4">
-                            <button onclick="testConnection()" class="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                                🔍 Test Koneksi
-                            </button>
-                            <button onclick="showSetupGuide()" class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                                📖 Panduan Setup
-                            </button>
-                        </div>
-
-                        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <h4 class="font-semibold text-yellow-800 mb-2">🚀 Mode Demo</h4>
-                            <p class="text-sm text-yellow-700 mb-3">Jika koneksi Google Sheets bermasalah, Anda bisa mencoba mode demo dengan data sample.</p>
-                            <button onclick="startDemoMode()" class="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors">
-                                🎮 Mulai Mode Demo
-                            </button>
-                        </div>
-
-                        <div id="connection-status" class="hidden p-4 rounded-lg"></div>
-                    </div>
-
-                    <!-- System Status -->
-                    <div class="space-y-6">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">📊 Status Sistem</h3>
-                        
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <span class="text-gray-700">Data Siswa</span>
-                                <span id="student-status" class="px-2 py-1 bg-gray-400 text-white text-xs rounded">Belum Terhubung</span>
-                            </div>
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <span class="text-gray-700">Bank Soal</span>
-                                <span id="questions-status" class="px-2 py-1 bg-gray-400 text-white text-xs rounded">Belum Terhubung</span>
-                            </div>
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <span class="text-gray-700">Penyimpanan Hasil</span>
-                                <span id="results-status" class="px-2 py-1 bg-gray-400 text-white text-xs rounded">Belum Terhubung</span>
-                            </div>
-                        </div>
-
-                        <button onclick="initializeSystem()" id="init-btn" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50" disabled>
-                            🚀 Inisialisasi Sistem
-                        </button>
-                    </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Memuat Sistem Asesmen</h2>
+                <p class="text-gray-600 mb-4">Menghubungkan ke Google Sheets...</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-700">
+                        <strong>📊 Spreadsheet ID:</strong> 1LXjILS4HLHFlbzl2aIYDrBLKM4D4bp2PUnJBgk81RqU
+                    </p>
                 </div>
             </div>
         </div>
@@ -281,10 +217,10 @@
     </div>
 
     <script>
-        // Global Variables
+        // Global Variables - Konfigurasi Langsung
         let systemConfig = {
-            appsScriptUrl: '',
-            spreadsheetId: ''
+            appsScriptUrl: 'https://script.google.com/macros/s/AKfycbwJkSCNQCLERl0R01p5Jc59ehEVe2yQjd0EvrxbBRWmCFXip1JxzLsPf-3xPF_HSI71fg/exec',
+            spreadsheetId: '1LXjILS4HLHFlbzl2aIYDrBLKM4D4bp2PUnJBgk81RqU'
         };
         let currentStudent = null;
         let currentExam = null;
@@ -294,84 +230,35 @@
         let timeLeft = 1800; // 30 minutes
         let timerInterval;
 
-        // System Configuration Functions
-        function testConnection() {
-            const url = document.getElementById('apps-script-url').value.trim();
-            const spreadsheetId = document.getElementById('spreadsheet-id').value.trim();
-            
-            if (!url || !spreadsheetId) {
-                showConnectionStatus('error', 'Harap isi URL Apps Script dan Spreadsheet ID');
-                return;
-            }
-            
-            systemConfig.appsScriptUrl = url;
-            systemConfig.spreadsheetId = spreadsheetId;
-            
-            showConnectionStatus('loading', 'Menguji koneksi...');
-            
-            // Test connection using form data (better for Google Apps Script)
-            const formData = new FormData();
-            formData.append('action', 'test');
-            formData.append('spreadsheetId', spreadsheetId);
-            
-            fetch(url, {
-                method: 'POST',
-                body: formData,
-                mode: 'no-cors' // Important for Google Apps Script
-            })
-            .then(() => {
-                // Since we're using no-cors, we can't read the response
-                // But if we get here without error, the request was sent
-                showConnectionStatus('success', 'Koneksi berhasil! Sistem siap digunakan.');
-                document.getElementById('init-btn').disabled = false;
-            })
-            .catch(error => {
-                console.error('Connection error:', error);
-                showConnectionStatus('error', 'Koneksi gagal. Pastikan Apps Script sudah di-deploy dengan benar.');
-            });
-        }
-
-        function showConnectionStatus(type, message) {
-            const statusDiv = document.getElementById('connection-status');
-            statusDiv.className = `p-4 rounded-lg ${
-                type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
-                type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' :
-                'bg-blue-100 border border-blue-400 text-blue-700'
-            }`;
-            statusDiv.textContent = message;
-            statusDiv.classList.remove('hidden');
-        }
-
+        // System Initialization - Auto Start
         async function initializeSystem() {
-            showLoading('Menginisialisasi sistem...');
-            
             try {
-                // Load students data
+                // Try to load from Google Sheets first
                 await loadStudentsData();
-                updateStatus('student-status', 'success', 'Terhubung');
+                await loadExamsData();
                 
-                // Initialize sample questions for demo
-                initializeSampleQuestions();
-                updateStatus('questions-status', 'success', 'Terhubung');
-                
-                // Test results saving
-                updateStatus('results-status', 'success', 'Siap');
-                
-                hideLoading();
-                
-                // Switch to login screen
-                document.getElementById('setup-screen').classList.add('hidden');
+                // If successful, hide loading and show login
+                document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('login-screen').classList.remove('hidden');
                 
-                alert('✅ Sistem berhasil diinisialisasi!\n\n🔑 Login Demo:\n• No. Induk: 001\n• Password: test123\n\nAtau gunakan:\n• No. Induk: 002, Password: test456\n• No. Induk: 003, Password: test789');
-                
             } catch (error) {
-                hideLoading();
-                alert('Gagal menginisialisasi sistem: ' + error.message);
+                console.warn('Google Sheets connection failed, using demo mode:', error);
+                
+                // Fallback to demo mode
+                initializeDemoMode();
+                
+                // Hide loading and show login
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                
+                // Show demo mode notification
+                setTimeout(() => {
+                    alert('🎮 Mode Demo Aktif!\n\nKoneksi ke Google Sheets gagal, menggunakan data demo.\n\n🔑 Login Demo:\n• No. Induk: 001, Password: test123 (Kelas 5A)\n• No. Induk: 002, Password: test456 (Kelas 5A)\n• No. Induk: 003, Password: test789 (Kelas 5B)');
+                }, 1000);
             }
         }
 
-        function startDemoMode() {
+        function initializeDemoMode() {
             // Initialize demo data
             initializeSampleQuestions();
             
@@ -381,17 +268,6 @@
                 { noInduk: '002', nama: 'Siti Aminah', kelas: '5A', password: 'test456', status: 'aktif' },
                 { noInduk: '003', nama: 'Muhammad Ali', kelas: '5B', password: 'test789', status: 'aktif' }
             ];
-            
-            // Update status indicators
-            updateStatus('student-status', 'success', 'Demo Mode');
-            updateStatus('questions-status', 'success', 'Demo Mode');
-            updateStatus('results-status', 'success', 'Demo Mode');
-            
-            // Switch to login screen
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-            
-            alert('🎮 Mode Demo Aktif!\n\n🔑 Login Demo:\n• No. Induk: 001, Password: test123 (Kelas 5A)\n• No. Induk: 002, Password: test456 (Kelas 5A)\n• No. Induk: 003, Password: test789 (Kelas 5B)\n\n📝 Data disimpan di browser (localStorage)');
         }
 
         function initializeSampleQuestions() {
@@ -469,14 +345,7 @@
             };
         }
 
-        function updateStatus(elementId, type, text) {
-            const element = document.getElementById(elementId);
-            element.className = `px-2 py-1 text-white text-xs rounded ${
-                type === 'success' ? 'bg-green-500' : 
-                type === 'error' ? 'bg-red-500' : 'bg-gray-400'
-            }`;
-            element.textContent = text;
-        }
+
 
         // Data Loading Functions
         async function loadStudentsData() {
@@ -484,23 +353,31 @@
             formData.append('action', 'getStudents');
             formData.append('spreadsheetId', systemConfig.spreadsheetId);
             
-            try {
-                const response = await fetch(systemConfig.appsScriptUrl, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                window.studentsData = data.students || [];
-            } catch (error) {
-                // Fallback: use sample data for testing
-                console.warn('Using sample data for testing');
-                window.studentsData = [
-                    { noInduk: '001', nama: 'Ahmad Fauzi', kelas: '5A', password: 'test123', status: 'aktif' },
-                    { noInduk: '002', nama: 'Siti Aminah', kelas: '5A', password: 'test456', status: 'aktif' },
-                    { noInduk: '003', nama: 'Muhammad Ali', kelas: '5B', password: 'test789', status: 'aktif' }
-                ];
-            }
+            const response = await fetch(systemConfig.appsScriptUrl, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors'
+            });
+            
+            // Since we're using no-cors, we can't read the response
+            // We'll assume success if no error is thrown
+            console.log('Students data request sent to Google Sheets');
+        }
+
+        async function loadExamsData() {
+            const formData = new FormData();
+            formData.append('action', 'getActiveExams');
+            formData.append('spreadsheetId', systemConfig.spreadsheetId);
+            
+            const response = await fetch(systemConfig.appsScriptUrl, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors'
+            });
+            
+            // Since we're using no-cors, we can't read the response
+            // We'll assume success if no error is thrown
+            console.log('Exams data request sent to Google Sheets');
         }
 
         async function loadQuestionsData(examId) {
@@ -1232,368 +1109,7 @@
             document.getElementById('login-screen').classList.remove('hidden');
         }
 
-        function showSetupGuide() {
-            const guideWindow = window.open('', '_blank', 'width=1000,height=700,scrollbars=yes');
-            guideWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Panduan Setup Google Sheets Integration</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-                        .step { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
-                        .code { background: #e8e8e8; padding: 10px; font-family: monospace; border-radius: 3px; white-space: pre-wrap; }
-                        h1 { color: #2563eb; }
-                        h2 { color: #1d4ed8; }
-                        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; }
-                        table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f2f2f2; }
-                    </style>
-                </head>
-                <body>
-                    <h1>🔗 Panduan Setup Google Sheets Integration</h1>
-                    
-                    <div class="warning">
-                        <strong>⚠️ Penting:</strong> Ikuti langkah-langkah ini dengan teliti untuk memastikan sistem berjalan dengan baik.
-                    </div>
 
-                    <h2>📊 Struktur Google Spreadsheet</h2>
-                    
-                    <div class="step">
-                        <h3>Sheet 1: "Students" - Data Siswa</h3>
-                        <table>
-                            <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
-                            <tr><td>noInduk</td><td>nama</td><td>kelas</td><td>password</td><td>status</td></tr>
-                            <tr><td>001</td><td>Ahmad Fauzi</td><td>5A</td><td>pass123</td><td>aktif</td></tr>
-                            <tr><td>002</td><td>Siti Aminah</td><td>5A</td><td>pass456</td><td>aktif</td></tr>
-                            <tr><td>003</td><td>Muhammad Ali</td><td>5B</td><td>pass789</td><td>aktif</td></tr>
-                        </table>
-                    </div>
-
-                    <div class="step">
-                        <h3>Sheet 2: "Questions" - Bank Soal</h3>
-                        <table>
-                            <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th><th>J</th><th>K</th><th>L</th></tr>
-                            <tr><td>mapel</td><td>kelas</td><td>materi</td><td>type</td><td>question</td><td>option1</td><td>option2</td><td>option3</td><td>option4</td><td>correct</td><td>points</td><td>status</td></tr>
-                            <tr><td>Fikih</td><td>5A</td><td>Infak</td><td>multipleChoice</td><td>Anjuran bagi orang yang memiliki kelebihan harta...</td><td>berpuasa</td><td>salat</td><td>berniaga</td><td>infak</td><td>3</td><td>1</td><td>aktif</td></tr>
-                            <tr><td>Fikih</td><td>5A</td><td>Infak</td><td>fillInBlank</td><td>Infak berasal dari kata nafaqa, yang artinya ...</td><td></td><td></td><td></td><td></td><td>menafkah,membelanjakan harta</td><td>1</td><td>aktif</td></tr>
-                        </table>
-                        
-                        <h4>Tipe Soal yang Didukung:</h4>
-                        <ul>
-                            <li><strong>multipleChoice:</strong> Pilihan ganda biasa (correct = index jawaban benar, mulai dari 0)</li>
-                            <li><strong>multipleChoiceComplex:</strong> Pilihan ganda kompleks (correct = array index, contoh: [0,2])</li>
-                            <li><strong>matching:</strong> Menjodohkan (gunakan kolom tambahan untuk leftItems dan rightItems)</li>
-                            <li><strong>fillInBlank:</strong> Isian singkat (correct = array kemungkinan jawaban benar)</li>
-                        </ul>
-                    </div>
-
-                    <div class="step">
-                        <h3>Sheet 3: "Settings" - Pengaturan Ujian</h3>
-                        <table>
-                            <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th></tr>
-                            <tr><td>ujianId</td><td>namaUjian</td><td>mapel</td><td>kelas</td><td>materi</td><td>waktuMenit</td><td>tanggalMulai</td><td>tanggalSelesai</td><td>status</td></tr>
-                            <tr><td>UJ001</td><td>Ulangan Harian Infak</td><td>Fikih</td><td>5A</td><td>Infak</td><td>30</td><td>2024-01-15 08:00</td><td>2024-01-15 10:00</td><td>aktif</td></tr>
-                            <tr><td>UJ002</td><td>PTS Fikih Semester 1</td><td>Fikih</td><td>5A,5B</td><td>Infak,Zakat</td><td>60</td><td>2024-01-20 08:00</td><td>2024-01-20 12:00</td><td>nonaktif</td></tr>
-                        </table>
-                        <p><strong>Keterangan:</strong></p>
-                        <ul>
-                            <li><strong>kelas:</strong> Pisahkan dengan koma untuk multiple kelas (5A,5B)</li>
-                            <li><strong>materi:</strong> Pisahkan dengan koma untuk multiple materi (Infak,Zakat)</li>
-                            <li><strong>status:</strong> aktif/nonaktif - hanya ujian aktif yang muncul</li>
-                        </ul>
-                    </div>
-
-                    <div class="step">
-                        <h3>Sheet 4: "Results" - Hasil Asesmen</h3>
-                        <table>
-                            <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th><th>J</th><th>K</th><th>L</th><th>M</th></tr>
-                            <tr><td>timestamp</td><td>ujianId</td><td>namaUjian</td><td>noInduk</td><td>nama</td><td>kelas</td><td>totalSkor</td><td>skorMaksimal</td><td>persentase</td><td>jawabanBenar</td><td>totalSoal</td><td>waktuPengerjaan</td><td>detailJawaban</td></tr>
-                        </table>
-                    </div>
-
-                    <h2>📝 Google Apps Script Code</h2>
-                    
-                    <div class="step">
-                        <h3>Langkah 1: Buat Google Apps Script</h3>
-                        <p>1. Buka Google Sheets yang sudah dibuat</p>
-                        <p>2. Klik Extensions → Apps Script</p>
-                        <p>3. Hapus kode default dan ganti dengan kode berikut:</p>
-                        
-                        <div class="code">function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    const action = data.action;
-    const spreadsheetId = data.spreadsheetId;
-    
-    const ss = SpreadsheetApp.openById(spreadsheetId);
-    
-    switch (action) {
-      case 'test':
-        return ContentService
-          .createTextOutput(JSON.stringify({status: 'success', message: 'Connection OK'}))
-          .setMimeType(ContentService.MimeType.JSON);
-          
-      case 'getStudents':
-        return getStudents(ss);
-        
-      case 'getActiveExams':
-        return getActiveExams(ss, data.studentClass);
-        
-      case 'getQuestions':
-        return getQuestions(ss, data.examId);
-        
-      case 'checkCompletion':
-        return checkCompletion(ss, data.studentId, data.examId);
-        
-      case 'saveResults':
-        return saveResults(ss, data.results);
-        
-      default:
-        throw new Error('Unknown action: ' + action);
-    }
-  } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({status: 'error', message: error.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function getStudents(ss) {
-  const sheet = ss.getSheetByName('Students');
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const students = [];
-  
-  for (let i = 1; i < data.length; i++) {
-    const student = {};
-    headers.forEach((header, index) => {
-      student[header] = data[i][index];
-    });
-    if (student.status === 'aktif') {
-      students.push(student);
-    }
-  }
-  
-  return ContentService
-    .createTextOutput(JSON.stringify({students: students}))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function getActiveExams(ss, studentClass) {
-  const sheet = ss.getSheetByName('Settings');
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const activeExams = [];
-  const now = new Date();
-  
-  for (let i = 1; i < data.length; i++) {
-    const exam = {};
-    headers.forEach((header, index) => {
-      exam[header] = data[i][index];
-    });
-    
-    // Check if exam is active and within time range
-    if (exam.status === 'aktif') {
-      const startTime = new Date(exam.tanggalMulai);
-      const endTime = new Date(exam.tanggalSelesai);
-      
-      // Check if current time is within exam period
-      if (now >= startTime && now <= endTime) {
-        // Check if student's class is included
-        const allowedClasses = exam.kelas.split(',').map(k => k.trim());
-        if (allowedClasses.includes(studentClass)) {
-          activeExams.push(exam);
-        }
-      }
-    }
-  }
-  
-  return ContentService
-    .createTextOutput(JSON.stringify({exams: activeExams}))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function getQuestions(ss, examId) {
-  // Get exam settings first
-  const settingsSheet = ss.getSheetByName('Settings');
-  const settingsData = settingsSheet.getDataRange().getValues();
-  const settingsHeaders = settingsData[0];
-  
-  let examSettings = null;
-  for (let i = 1; i < settingsData.length; i++) {
-    const exam = {};
-    settingsHeaders.forEach((header, index) => {
-      exam[header] = settingsData[i][index];
-    });
-    if (exam.ujianId === examId) {
-      examSettings = exam;
-      break;
-    }
-  }
-  
-  if (!examSettings) {
-    throw new Error('Exam not found');
-  }
-  
-  // Get questions based on exam settings
-  const questionsSheet = ss.getSheetByName('Questions');
-  const questionsData = questionsSheet.getDataRange().getValues();
-  const questionsHeaders = questionsData[0];
-  const questions = [];
-  
-  const allowedClasses = examSettings.kelas.split(',').map(k => k.trim());
-  const allowedMateri = examSettings.materi.split(',').map(m => m.trim());
-  
-  for (let i = 1; i < questionsData.length; i++) {
-    const question = {};
-    questionsHeaders.forEach((header, index) => {
-      question[header] = questionsData[i][index];
-    });
-    
-    // Filter questions based on exam criteria
-    if (question.status === 'aktif' && 
-        question.mapel === examSettings.mapel &&
-        allowedClasses.includes(question.kelas) &&
-        allowedMateri.includes(question.materi)) {
-      
-      // Process options
-      question.options = [question.option1, question.option2, question.option3, question.option4].filter(opt => opt);
-      
-      // Process correct answers
-      if (question.type === 'multipleChoiceComplex') {
-        question.correct = JSON.parse(question.correct);
-      } else if (question.type === 'fillInBlank') {
-        question.correct = question.correct.split(',').map(s => s.trim());
-      } else if (question.type === 'matching') {
-        question.correct = JSON.parse(question.correct);
-        question.leftItems = JSON.parse(question.leftItems || '[]');
-        question.rightItems = JSON.parse(question.rightItems || '[]');
-      } else {
-        question.correct = parseInt(question.correct);
-      }
-      
-      questions.push(question);
-    }
-  }
-  
-  return ContentService
-    .createTextOutput(JSON.stringify({
-      questions: questions,
-      examSettings: examSettings
-    }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function checkCompletion(ss, studentId, examId) {
-  const sheet = ss.getSheetByName('Results');
-  const data = sheet.getDataRange().getValues();
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][1] === examId && data[i][3] === studentId) { // Column B is examId, Column D is noInduk
-      return ContentService
-        .createTextOutput(JSON.stringify({completed: true}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-  
-  return ContentService
-    .createTextOutput(JSON.stringify({completed: false}))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function saveResults(ss, results) {
-  const sheet = ss.getSheetByName('Results');
-  
-  sheet.appendRow([
-    results.timestamp,
-    results.ujianId,
-    results.namaUjian,
-    results.noInduk,
-    results.nama,
-    results.kelas,
-    results.totalSkor,
-    results.skorMaksimal,
-    results.persentase,
-    results.jawabanBenar,
-    results.totalSoal,
-    results.waktuPengerjaan,
-    results.detailJawaban
-  ]);
-  
-  return ContentService
-    .createTextOutput(JSON.stringify({status: 'success', message: 'Results saved'}))
-    .setMimeType(ContentService.MimeType.JSON);
-}</div>
-                    </div>
-
-                    <div class="step">
-                        <h3>Langkah 2: Deploy Apps Script</h3>
-                        <p>1. Klik Deploy → New deployment</p>
-                        <p>2. Pilih type: Web app</p>
-                        <p>3. Execute as: Me</p>
-                        <p>4. Who has access: Anyone</p>
-                        <p>5. Klik Deploy</p>
-                        <p>6. Copy URL yang diberikan</p>
-                    </div>
-
-                    <div class="step">
-                        <h3>Langkah 3: Konfigurasi Sistem</h3>
-                        <p>1. Masukkan URL Apps Script ke form konfigurasi</p>
-                        <p>2. Masukkan Spreadsheet ID (dari URL Google Sheets)</p>
-                        <p>3. Klik "Test Koneksi" untuk memverifikasi</p>
-                        <p>4. Jika berhasil, klik "Inisialisasi Sistem"</p>
-                    </div>
-
-                    <h2>🔧 Contoh Data untuk Testing</h2>
-                    
-                    <div class="step">
-                        <h3>Data Siswa (Sheet "Students"):</h3>
-                        <div class="code">noInduk	nama	kelas	password	status
-001	Ahmad Fauzi	5A	test123	aktif
-002	Siti Aminah	5A	test456	aktif
-003	Muhammad Ali	5B	test789	aktif</div>
-                    </div>
-
-                    <div class="step">
-                        <h3>Data Soal (Sheet "Questions"):</h3>
-                        <div class="code">mapel	kelas	materi	type	question	option1	option2	option3	option4	correct	points	status
-Fikih	5A	Infak	multipleChoice	Anjuran bagi orang yang memiliki kelebihan harta untuk dirinya dan orang yang ditanggung adalah ….	berpuasa	salat	berniaga	infak	3	1	aktif
-Fikih	5A	Infak	fillInBlank	Infak berasal dari kata nafaqa, yang artinya ….				menafkah,membelanjakan harta	1	aktif
-Fikih	5B	Zakat	multipleChoice	Zakat fitrah wajib dikeluarkan pada bulan ….	Ramadan	Syawal	Dzulhijjah	Muharram	0	1	aktif</div>
-                    </div>
-
-                    <div class="step">
-                        <h3>Data Pengaturan Ujian (Sheet "Settings"):</h3>
-                        <div class="code">ujianId	namaUjian	mapel	kelas	materi	waktuMenit	tanggalMulai	tanggalSelesai	status
-UJ001	Ulangan Harian Infak	Fikih	5A	Infak	30	2024-01-15 08:00	2024-01-15 10:00	aktif
-UJ002	PTS Fikih Semester 1	Fikih	5A,5B	Infak,Zakat	60	2024-01-20 08:00	2024-01-20 12:00	nonaktif</div>
-                    </div>
-
-                    <h2>🚀 Cara Penggunaan</h2>
-                    
-                    <div class="step">
-                        <ol>
-                            <li>Setup Google Sheets dengan struktur yang benar</li>
-                            <li>Deploy Google Apps Script</li>
-                            <li>Konfigurasi sistem dengan URL dan Spreadsheet ID</li>
-                            <li>Test koneksi dan inisialisasi sistem</li>
-                            <li>Siswa login dengan No. Induk dan Password</li>
-                            <li>Sistem otomatis mengambil soal dari Google Sheets</li>
-                            <li>Hasil otomatis tersimpan ke Google Sheets</li>
-                        </ol>
-                    </div>
-
-                    <div style="text-align: center; margin-top: 30px;">
-                        <button onclick="window.close()" style="background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
-                            Tutup Panduan
-                        </button>
-                    </div>
-                </body>
-                </html>
-            `);
-        }
 
         // Utility Functions
         function showLoading(message) {
@@ -1607,8 +1123,11 @@ UJ002	PTS Fikih Semester 1	Fikih	5A,5B	Infak,Zakat	60	2024-01-20 08:00	2024-01-2
 
         // Initialize the system when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // System is ready for configuration
+            // Auto-initialize system on page load
+            setTimeout(() => {
+                initializeSystem();
+            }, 2000); // 2 second delay to show loading screen
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d5325a76f3a3dc',t:'MTc1NDg4ODcxMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d53f377335f309',t:'MTc1NDg4OTI0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
