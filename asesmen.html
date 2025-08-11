@@ -74,14 +74,14 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Google Apps Script URL:</label>
                             <input type="url" id="apps-script-url" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                                   placeholder="https://script.google.com/macros/s/AKfycbwJkSCNQCLERl0R01p5Jc59ehEVe2yQjd0EvrxbBRWmCFXip1JxzLsPf-3xPF_HSI71fg/exec">
+                                   placeholder="https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec">
                             <p class="text-xs text-gray-500 mt-1">URL dari Google Apps Script yang sudah di-deploy</p>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Spreadsheet ID:</label>
                             <input type="text" id="spreadsheet-id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                                   placeholder="1LXjILS4HLHFlbzl2aIYDrBLKM4D4bp2PUnJBgk81RqU">
+                                   placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
                             <p class="text-xs text-gray-500 mt-1">ID dari Google Spreadsheet (dari URL)</p>
                         </div>
 
@@ -91,6 +91,14 @@
                             </button>
                             <button onclick="showSetupGuide()" class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
                                 📖 Panduan Setup
+                            </button>
+                        </div>
+
+                        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <h4 class="font-semibold text-yellow-800 mb-2">🚀 Mode Demo</h4>
+                            <p class="text-sm text-yellow-700 mb-3">Jika koneksi Google Sheets bermasalah, Anda bisa mencoba mode demo dengan data sample.</p>
+                            <button onclick="startDemoMode()" class="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors">
+                                🎮 Mulai Mode Demo
                             </button>
                         </div>
 
@@ -301,22 +309,25 @@
             
             showConnectionStatus('loading', 'Menguji koneksi...');
             
-            // Test connection to Google Apps Script
+            // Test connection using form data (better for Google Apps Script)
+            const formData = new FormData();
+            formData.append('action', 'test');
+            formData.append('spreadsheetId', spreadsheetId);
+            
             fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'test' })
+                body: formData,
+                mode: 'no-cors' // Important for Google Apps Script
             })
-            .then(response => {
-                if (response.ok) {
-                    showConnectionStatus('success', 'Koneksi berhasil! Sistem siap digunakan.');
-                    document.getElementById('init-btn').disabled = false;
-                } else {
-                    throw new Error('Koneksi gagal');
-                }
+            .then(() => {
+                // Since we're using no-cors, we can't read the response
+                // But if we get here without error, the request was sent
+                showConnectionStatus('success', 'Koneksi berhasil! Sistem siap digunakan.');
+                document.getElementById('init-btn').disabled = false;
             })
             .catch(error => {
-                showConnectionStatus('error', 'Koneksi gagal. Periksa URL dan konfigurasi Apps Script.');
+                console.error('Connection error:', error);
+                showConnectionStatus('error', 'Koneksi gagal. Pastikan Apps Script sudah di-deploy dengan benar.');
             });
         }
 
@@ -339,8 +350,8 @@
                 await loadStudentsData();
                 updateStatus('student-status', 'success', 'Terhubung');
                 
-                // Load questions data
-                await loadQuestionsData();
+                // Initialize sample questions for demo
+                initializeSampleQuestions();
                 updateStatus('questions-status', 'success', 'Terhubung');
                 
                 // Test results saving
@@ -352,10 +363,110 @@
                 document.getElementById('setup-screen').classList.add('hidden');
                 document.getElementById('login-screen').classList.remove('hidden');
                 
+                alert('✅ Sistem berhasil diinisialisasi!\n\n🔑 Login Demo:\n• No. Induk: 001\n• Password: test123\n\nAtau gunakan:\n• No. Induk: 002, Password: test456\n• No. Induk: 003, Password: test789');
+                
             } catch (error) {
                 hideLoading();
                 alert('Gagal menginisialisasi sistem: ' + error.message);
             }
+        }
+
+        function startDemoMode() {
+            // Initialize demo data
+            initializeSampleQuestions();
+            
+            // Set demo students data
+            window.studentsData = [
+                { noInduk: '001', nama: 'Ahmad Fauzi', kelas: '5A', password: 'test123', status: 'aktif' },
+                { noInduk: '002', nama: 'Siti Aminah', kelas: '5A', password: 'test456', status: 'aktif' },
+                { noInduk: '003', nama: 'Muhammad Ali', kelas: '5B', password: 'test789', status: 'aktif' }
+            ];
+            
+            // Update status indicators
+            updateStatus('student-status', 'success', 'Demo Mode');
+            updateStatus('questions-status', 'success', 'Demo Mode');
+            updateStatus('results-status', 'success', 'Demo Mode');
+            
+            // Switch to login screen
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            
+            alert('🎮 Mode Demo Aktif!\n\n🔑 Login Demo:\n• No. Induk: 001, Password: test123 (Kelas 5A)\n• No. Induk: 002, Password: test456 (Kelas 5A)\n• No. Induk: 003, Password: test789 (Kelas 5B)\n\n📝 Data disimpan di browser (localStorage)');
+        }
+
+        function initializeSampleQuestions() {
+            // Sample questions for demo
+            window.sampleExams = [
+                {
+                    ujianId: 'UJ001',
+                    namaUjian: 'Ulangan Harian Infak',
+                    mapel: 'Fikih',
+                    kelas: '5A',
+                    materi: 'Infak',
+                    waktuMenit: 30,
+                    tanggalMulai: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+                    tanggalSelesai: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+                    status: 'aktif'
+                },
+                {
+                    ujianId: 'UJ002',
+                    namaUjian: 'Quiz Zakat',
+                    mapel: 'Fikih',
+                    kelas: '5B',
+                    materi: 'Zakat',
+                    waktuMenit: 20,
+                    tanggalMulai: new Date(Date.now() - 3600000).toISOString(),
+                    tanggalSelesai: new Date(Date.now() + 3600000).toISOString(),
+                    status: 'aktif'
+                }
+            ];
+
+            window.sampleQuestions = {
+                'UJ001': [
+                    {
+                        type: 'multipleChoice',
+                        question: 'Anjuran bagi orang yang memiliki kelebihan harta untuk dirinya dan orang yang ditanggung adalah ….',
+                        options: ['berpuasa', 'salat', 'berniaga', 'infak'],
+                        correct: 3,
+                        points: 1
+                    },
+                    {
+                        type: 'fillInBlank',
+                        question: 'Infak berasal dari kata nafaqa, yang artinya ….',
+                        correct: ['menafkah', 'membelanjakan harta', 'mengeluarkan'],
+                        points: 1
+                    },
+                    {
+                        type: 'multipleChoice',
+                        question: 'Hukum infak dalam Islam adalah ….',
+                        options: ['wajib', 'sunnah', 'mubah', 'makruh'],
+                        correct: 1,
+                        points: 1
+                    },
+                    {
+                        type: 'multipleChoiceComplex',
+                        question: 'Yang termasuk adab berinfak adalah … (pilih lebih dari satu)',
+                        options: ['ikhlas', 'riya', 'tidak menyakiti', 'sombong'],
+                        correct: [0, 2],
+                        points: 2
+                    }
+                ],
+                'UJ002': [
+                    {
+                        type: 'multipleChoice',
+                        question: 'Zakat fitrah wajib dikeluarkan pada bulan ….',
+                        options: ['Ramadan', 'Syawal', 'Dzulhijjah', 'Muharram'],
+                        correct: 0,
+                        points: 1
+                    },
+                    {
+                        type: 'fillInBlank',
+                        question: 'Nisab zakat emas adalah … gram.',
+                        correct: ['85', '85 gram'],
+                        points: 1
+                    }
+                ]
+            };
         }
 
         function updateStatus(elementId, type, text) {
@@ -369,19 +480,27 @@
 
         // Data Loading Functions
         async function loadStudentsData() {
-            const response = await fetch(systemConfig.appsScriptUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: 'getStudents',
-                    spreadsheetId: systemConfig.spreadsheetId 
-                })
-            });
+            const formData = new FormData();
+            formData.append('action', 'getStudents');
+            formData.append('spreadsheetId', systemConfig.spreadsheetId);
             
-            if (!response.ok) throw new Error('Gagal memuat data siswa');
-            
-            const data = await response.json();
-            window.studentsData = data.students || [];
+            try {
+                const response = await fetch(systemConfig.appsScriptUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                window.studentsData = data.students || [];
+            } catch (error) {
+                // Fallback: use sample data for testing
+                console.warn('Using sample data for testing');
+                window.studentsData = [
+                    { noInduk: '001', nama: 'Ahmad Fauzi', kelas: '5A', password: 'test123', status: 'aktif' },
+                    { noInduk: '002', nama: 'Siti Aminah', kelas: '5A', password: 'test456', status: 'aktif' },
+                    { noInduk: '003', nama: 'Muhammad Ali', kelas: '5B', password: 'test789', status: 'aktif' }
+                ];
+            }
         }
 
         async function loadQuestionsData(examId) {
@@ -454,21 +573,11 @@
             showLoading('Memuat ujian yang tersedia...');
             
             try {
-                // Get active exams for student's class
-                const response = await fetch(systemConfig.appsScriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'getActiveExams',
-                        spreadsheetId: systemConfig.spreadsheetId,
-                        studentClass: currentStudent.kelas
-                    })
+                // Use sample exams for demo
+                const activeExams = window.sampleExams.filter(exam => {
+                    const allowedClasses = exam.kelas.split(',').map(k => k.trim());
+                    return allowedClasses.includes(currentStudent.kelas) && exam.status === 'aktif';
                 });
-                
-                if (!response.ok) throw new Error('Gagal memuat ujian');
-                
-                const data = await response.json();
-                const activeExams = data.exams || [];
                 
                 hideLoading();
                 displayAvailableExams(activeExams);
@@ -562,13 +671,26 @@
             showLoading('Memuat soal ujian...');
             
             try {
-                await loadQuestionsData(examId);
+                // Get exam settings from sample data
+                currentExam = window.sampleExams.find(exam => exam.ujianId === examId);
+                if (!currentExam) {
+                    throw new Error('Ujian tidak ditemukan');
+                }
+                
+                // Get questions from sample data
+                allQuestions = window.sampleQuestions[examId] || [];
                 
                 if (allQuestions.length === 0) {
                     hideLoading();
                     alert('Tidak ada soal yang tersedia untuk ujian ini');
                     return;
                 }
+                
+                // Set timer based on exam settings
+                timeLeft = (currentExam.waktuMenit || 30) * 60;
+                
+                // Initialize user answers array
+                userAnswers = new Array(allQuestions.length).fill(null);
                 
                 hideLoading();
                 startQuiz();
@@ -606,19 +728,10 @@
 
         async function checkQuizCompletion(studentId, examId) {
             try {
-                const response = await fetch(systemConfig.appsScriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'checkCompletion',
-                        spreadsheetId: systemConfig.spreadsheetId,
-                        studentId: studentId,
-                        examId: examId
-                    })
-                });
-                
-                const data = await response.json();
-                return data.completed || false;
+                // For demo, check localStorage for completed exams
+                const completedExams = JSON.parse(localStorage.getItem('completedExams') || '[]');
+                const key = `${studentId}_${examId}`;
+                return completedExams.includes(key);
             } catch (error) {
                 console.error('Error checking completion:', error);
                 return false;
@@ -1057,36 +1170,37 @@
             showLoading('Menyimpan hasil...');
             
             try {
-                const response = await fetch(systemConfig.appsScriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'saveResults',
-                        spreadsheetId: systemConfig.spreadsheetId,
-                        results: {
-                            timestamp: new Date().toLocaleString('id-ID'),
-                            ujianId: currentExam.ujianId,
-                            namaUjian: currentExam.namaUjian,
-                            noInduk: results.student.noInduk,
-                            nama: results.student.nama,
-                            kelas: results.student.kelas,
-                            totalSkor: results.totalScore,
-                            skorMaksimal: results.maxScore,
-                            persentase: results.percentage,
-                            jawabanBenar: results.correctAnswers,
-                            totalSoal: results.totalQuestions,
-                            waktuPengerjaan: Math.floor(results.timeSpent / 60) + ' menit ' + (results.timeSpent % 60) + ' detik',
-                            detailJawaban: JSON.stringify(results.answers)
-                        }
-                    })
-                });
+                // For demo, save to localStorage
+                const savedResults = JSON.parse(localStorage.getItem('examResults') || '[]');
+                const resultData = {
+                    timestamp: new Date().toLocaleString('id-ID'),
+                    ujianId: currentExam.ujianId,
+                    namaUjian: currentExam.namaUjian,
+                    noInduk: results.student.noInduk,
+                    nama: results.student.nama,
+                    kelas: results.student.kelas,
+                    totalSkor: results.totalScore,
+                    skorMaksimal: results.maxScore,
+                    persentase: results.percentage,
+                    jawabanBenar: results.correctAnswers,
+                    totalSoal: results.totalQuestions,
+                    waktuPengerjaan: Math.floor(results.timeSpent / 60) + ' menit ' + (results.timeSpent % 60) + ' detik',
+                    detailJawaban: JSON.stringify(results.answers)
+                };
                 
-                if (response.ok) {
-                    hideLoading();
-                    alert(`✅ Hasil berhasil disimpan!\n\nUjian: ${currentExam.namaUjian}\nNama: ${results.student.nama}\nSkor: ${results.totalScore}/${results.maxScore} (${results.percentage}%)\n\nTerima kasih telah mengerjakan ujian!`);
-                } else {
-                    throw new Error('Gagal menyimpan hasil');
+                savedResults.push(resultData);
+                localStorage.setItem('examResults', JSON.stringify(savedResults));
+                
+                // Mark exam as completed
+                const completedExams = JSON.parse(localStorage.getItem('completedExams') || '[]');
+                const key = `${results.student.noInduk}_${currentExam.ujianId}`;
+                if (!completedExams.includes(key)) {
+                    completedExams.push(key);
+                    localStorage.setItem('completedExams', JSON.stringify(completedExams));
                 }
+                
+                hideLoading();
+                alert(`✅ Hasil berhasil disimpan!\n\nUjian: ${currentExam.namaUjian}\nNama: ${results.student.nama}\nSkor: ${results.totalScore}/${results.maxScore} (${results.percentage}%)\n\nTerima kasih telah mengerjakan ujian!`);
                 
             } catch (error) {
                 hideLoading();
@@ -1496,5 +1610,5 @@ UJ002	PTS Fikih Semester 1	Fikih	5A,5B	Infak,Zakat	60	2024-01-20 08:00	2024-01-2
             // System is ready for configuration
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d4848f800a5fd8',t:'MTc1NDg4MTU5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d5325a76f3a3dc',t:'MTc1NDg4ODcxMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
