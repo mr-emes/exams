@@ -26,8 +26,8 @@
         <div class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Fikih Kelas 5</h1>
-                    <p class="text-gray-600">Ketentuan Infak</p>
+                    <h1 id="exam-title" class="text-2xl font-bold text-gray-800">Asesmen Online Fikih</h1>
+                    <p id="exam-subtitle" class="text-gray-600">Sistem Terintegrasi Google Sheets</p>
                 </div>
                 <div class="text-right">
                     <div class="text-sm text-gray-500">Waktu Tersisa</div>
@@ -269,6 +269,22 @@
         }
 
         function initializeSampleQuestions() {
+            // Sample exam settings from Settings sheet
+            window.examSettings = {
+                'UJ001': {
+                    namaUjian: 'Ulangan Harian Infak',
+                    mapel: 'Fikih',
+                    kelas: '5A',
+                    materi: 'Infak dan Sedekah'
+                },
+                'UJ002': {
+                    namaUjian: 'Quiz Zakat',
+                    mapel: 'Fikih', 
+                    kelas: '5B',
+                    materi: 'Zakat Fitrah dan Zakat Mal'
+                }
+            };
+
             // Sample questions for demo
             window.sampleExams = [
                 {
@@ -276,7 +292,7 @@
                     namaUjian: 'Ulangan Harian Infak',
                     mapel: 'Fikih',
                     kelas: '5A',
-                    materi: 'Infak',
+                    materi: 'Infak dan Sedekah',
                     waktuMenit: 30,
                     tanggalMulai: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
                     tanggalSelesai: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
@@ -287,7 +303,7 @@
                     namaUjian: 'Quiz Zakat',
                     mapel: 'Fikih',
                     kelas: '5B',
-                    materi: 'Zakat',
+                    materi: 'Zakat Fitrah dan Zakat Mal',
                     waktuMenit: 20,
                     tanggalMulai: new Date(Date.now() - 3600000).toISOString(),
                     tanggalSelesai: new Date(Date.now() + 3600000).toISOString(),
@@ -415,9 +431,14 @@
             showLoading('Memverifikasi login...');
             
             try {
+                // Ensure studentsData is available
+                if (!window.studentsData || !Array.isArray(window.studentsData)) {
+                    throw new Error('Data siswa belum dimuat');
+                }
+                
                 // Find student in loaded data
                 const student = window.studentsData.find(s => 
-                    s.noInduk === studentId && s.password === password
+                    s.noInduk === studentId && s.password === password && s.status === 'aktif'
                 );
                 
                 if (!student) {
@@ -567,12 +588,26 @@
                 // Initialize user answers array
                 userAnswers = new Array(allQuestions.length).fill(null);
                 
+                // Update header with exam information
+                updateExamHeader(examId);
+                
                 hideLoading();
                 startQuiz();
                 
             } catch (error) {
                 hideLoading();
                 alert('Gagal memuat soal: ' + error.message);
+            }
+        }
+
+        function updateExamHeader(examId) {
+            const settings = window.examSettings[examId];
+            if (settings) {
+                const titleElement = document.getElementById('exam-title');
+                const subtitleElement = document.getElementById('exam-subtitle');
+                
+                titleElement.textContent = `${settings.namaUjian} - ${settings.mapel} - ${settings.kelas}`;
+                subtitleElement.textContent = settings.materi;
             }
         }
 
@@ -1102,6 +1137,10 @@
             document.getElementById('timer').textContent = '30:00';
             document.getElementById('progress-bar').style.width = '0%';
             
+            // Reset header to default
+            document.getElementById('exam-title').textContent = 'Asesmen Online Fikih';
+            document.getElementById('exam-subtitle').textContent = 'Sistem Terintegrasi Google Sheets';
+            
             // Show login screen
             document.getElementById('results-screen').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
@@ -1127,5 +1166,5 @@
             }, 2000); // 2 second delay to show loading screen
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d543e134acf93c',t:'MTc1NDg4OTQzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d54daa25e2fe8a',t:'MTc1NDg4OTgzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
