@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asesmen Online Fikih - Sistem Terintegrasi Google Sheets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .question-card { transition: all 0.3s ease; }
+        .question-card:hover { transform: translateY(-2px); }
+        .option-button { transition: all 0.2s ease; }
+        .option-button:hover { transform: scale(1.02); }
+        .selected { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .correct { background: linear-gradient(135deg, #10b981, #059669); }
+        .incorrect { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .progress-bar { transition: width 0.5s ease; }
+        .loading { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <div class="bg-white shadow-lg border-b-4 border-blue-500">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Asesmen Online Fikih</h1>
+                    <p class="text-gray-600">Sistem Terintegrasi Google Sheets</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-500">Waktu Tersisa</div>
+                    <div id="timer" class="text-xl font-bold text-blue-600">30:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="bg-white shadow-sm">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Progress</span>
+                <span id="progress-text" class="text-sm text-gray-500">0 dari 0 soal</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progress-bar" class="progress-bar bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-6 py-8">
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Setup Google Sheets Integration</h2>
+                    <p class="text-gray-600">Konfigurasi koneksi ke Google Sheets untuk sistem asesmen</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Configuration Form -->
+                    <div class="space-y-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">🔧 Konfigurasi Sistem</h3>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Google Apps Script URL:</label>
+                            <input type="url" id="apps-script-url" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec">
+                            <p class="text-xs text-gray-500 mt-1">URL dari Google Apps Script yang sudah di-deploy</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Spreadsheet ID:</label>
+                            <input type="text" id="spreadsheet-id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+                            <p class="text-xs text-gray-500 mt-1">ID dari Google Spreadsheet (dari URL)</p>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button onclick="testConnection()" class="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                                🔍 Test Koneksi
+                            </button>
+                            <button onclick="showSetupGuide()" class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                                📖 Panduan Setup
+                            </button>
+                        </div>
+
+                        <div id="connection-status" class="hidden p-4 rounded-lg"></div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="space-y-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">📊 Status Sistem</h3>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <span class="text-gray-700">Data Siswa</span>
+                                <span id="student-status" class="px-2 py-1 bg-gray-400 text-white text-xs rounded">Belum Terhubung</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <span class="text-gray-700">Bank Soal</span>
+                                <span id="questions-status" class="px-2 py-1 bg-gray-400 text-white text-xs rounded">Belum Terhubung</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <span class="text-gray-700">Penyimpanan Hasil</span>
+                                <span id="results-status" class="px-2 py-1 bg-gray-400 text-white text-xs rounded">Belum Terhubung</span>
+                            </div>
+                        </div>
+
+                        <button onclick="initializeSystem()" id="init-btn" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50" disabled>
+                            🚀 Inisialisasi Sistem
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="login-screen" class="hidden max-w-md mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Login Siswa</h2>
+                    <p class="text-gray-600">Masukkan No. Induk dan Password Anda</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">No. Induk Siswa:</label>
+                        <input type="text" id="login-student-id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                               placeholder="Masukkan nomor induk">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password:</label>
+                        <input type="password" id="login-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                               placeholder="Masukkan password">
+                    </div>
+                    
+                    <button onclick="loginStudent()" id="login-btn" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                        🔐 Login
+                    </button>
+                    
+                    <div id="login-error" class="hidden p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Selection Screen -->
+        <div id="exam-selection-screen" class="hidden max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Pilih Ujian</h2>
+                    <p class="text-gray-600">Selamat datang <span id="student-name-display" class="font-semibold text-blue-600"></span>! Pilih ujian yang tersedia untuk Anda.</p>
+                </div>
+
+                <div id="available-exams" class="space-y-4">
+                    <!-- Available exams will be loaded here -->
+                </div>
+
+                <div id="no-exams" class="hidden text-center py-12">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Tidak Ada Ujian Aktif</h3>
+                    <p class="text-gray-500 mb-6">Saat ini tidak ada ujian yang tersedia untuk kelas Anda.</p>
+                    <button onclick="refreshExams()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        🔄 Refresh
+                    </button>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button onclick="logoutStudent()" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        ← Kembali ke Login
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="max-w-4xl mx-auto">
+                <div id="question-container" class="bg-white rounded-xl shadow-lg p-8 question-card">
+                    <!-- Questions will be loaded here -->
+                </div>
+                
+                <div class="flex justify-between mt-6">
+                    <button id="prev-btn" onclick="previousQuestion()" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        ← Sebelumnya
+                    </button>
+                    <button id="next-btn" onclick="nextQuestion()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Selanjutnya →
+                    </button>
+                    <button id="finish-btn" onclick="finishQuiz()" class="hidden px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Selesai
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                    <div class="mb-6">
+                        <div id="result-icon" class="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center">
+                            <!-- Icon will be set by JavaScript -->
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">Asesmen Selesai!</h2>
+                        <p id="result-message" class="text-gray-600"></p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-blue-50 rounded-lg p-6">
+                            <div class="text-3xl font-bold text-blue-600" id="total-score">0</div>
+                            <div class="text-gray-600">Total Skor</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-6">
+                            <div class="text-3xl font-bold text-green-600" id="correct-answers">0</div>
+                            <div class="text-gray-600">Jawaban Benar</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-6">
+                            <div class="text-3xl font-bold text-purple-600" id="percentage">0%</div>
+                            <div class="text-gray-600">Persentase</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h3 class="font-semibold text-gray-800 mb-4">Rincian Hasil:</h3>
+                        <div id="detailed-results" class="space-y-2">
+                            <!-- Detailed results will be shown here -->
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 justify-center">
+                        <button onclick="saveResults()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            💾 Simpan Hasil
+                        </button>
+                        <button onclick="restartQuiz()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            🔄 Kembali ke Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 text-center">
+            <div class="loading w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p id="loading-text" class="text-gray-700">Memuat data...</p>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        let systemConfig = {
+            appsScriptUrl: '',
+            spreadsheetId: ''
+        };
+        let currentStudent = null;
+        let currentExam = null;
+        let allQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let timeLeft = 1800; // 30 minutes
+        let timerInterval;
+
+        // System Configuration Functions
+        function testConnection() {
+            const url = document.getElementById('apps-script-url').value.trim();
+            const spreadsheetId = document.getElementById('spreadsheet-id').value.trim();
+            
+            if (!url || !spreadsheetId) {
+                showConnectionStatus('error', 'Harap isi URL Apps Script dan Spreadsheet ID');
+                return;
+            }
+            
+            systemConfig.appsScriptUrl = url;
+            systemConfig.spreadsheetId = spreadsheetId;
+            
+            showConnectionStatus('loading', 'Menguji koneksi...');
+            
+            // Test connection to Google Apps Script
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'test' })
+            })
+            .then(response => {
+                if (response.ok) {
+                    showConnectionStatus('success', 'Koneksi berhasil! Sistem siap digunakan.');
+                    document.getElementById('init-btn').disabled = false;
+                } else {
+                    throw new Error('Koneksi gagal');
+                }
+            })
+            .catch(error => {
+                showConnectionStatus('error', 'Koneksi gagal. Periksa URL dan konfigurasi Apps Script.');
+            });
+        }
+
+        function showConnectionStatus(type, message) {
+            const statusDiv = document.getElementById('connection-status');
+            statusDiv.className = `p-4 rounded-lg ${
+                type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
+                type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' :
+                'bg-blue-100 border border-blue-400 text-blue-700'
+            }`;
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('hidden');
+        }
+
+        async function initializeSystem() {
+            showLoading('Menginisialisasi sistem...');
+            
+            try {
+                // Load students data
+                await loadStudentsData();
+                updateStatus('student-status', 'success', 'Terhubung');
+                
+                // Load questions data
+                await loadQuestionsData();
+                updateStatus('questions-status', 'success', 'Terhubung');
+                
+                // Test results saving
+                updateStatus('results-status', 'success', 'Siap');
+                
+                hideLoading();
+                
+                // Switch to login screen
+                document.getElementById('setup-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                
+            } catch (error) {
+                hideLoading();
+                alert('Gagal menginisialisasi sistem: ' + error.message);
+            }
+        }
+
+        function updateStatus(elementId, type, text) {
+            const element = document.getElementById(elementId);
+            element.className = `px-2 py-1 text-white text-xs rounded ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-gray-400'
+            }`;
+            element.textContent = text;
+        }
+
+        // Data Loading Functions
+        async function loadStudentsData() {
+            const response = await fetch(systemConfig.appsScriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'getStudents',
+                    spreadsheetId: systemConfig.spreadsheetId 
+                })
+            });
+            
+            if (!response.ok) throw new Error('Gagal memuat data siswa');
+            
+            const data = await response.json();
+            window.studentsData = data.students || [];
+        }
+
+        async function loadQuestionsData(examId) {
+            const response = await fetch(systemConfig.appsScriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'getQuestions',
+                    spreadsheetId: systemConfig.spreadsheetId,
+                    examId: examId
+                })
+            });
+            
+            if (!response.ok) throw new Error('Gagal memuat bank soal');
+            
+            const data = await response.json();
+            allQuestions = data.questions || [];
+            currentExam = data.examSettings;
+            
+            // Set timer based on exam settings
+            timeLeft = (currentExam.waktuMenit || 30) * 60;
+            
+            // Initialize user answers array
+            userAnswers = new Array(allQuestions.length).fill(null);
+        }
+
+        // Login Functions
+        async function loginStudent() {
+            const studentId = document.getElementById('login-student-id').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            
+            if (!studentId || !password) {
+                showLoginError('Harap isi No. Induk dan Password');
+                return;
+            }
+            
+            showLoading('Memverifikasi login...');
+            
+            try {
+                // Find student in loaded data
+                const student = window.studentsData.find(s => 
+                    s.noInduk === studentId && s.password === password
+                );
+                
+                if (!student) {
+                    hideLoading();
+                    showLoginError('No. Induk atau Password salah');
+                    return;
+                }
+                
+                currentStudent = student;
+                hideLoading();
+                
+                // Show exam selection screen
+                showExamSelection();
+                
+            } catch (error) {
+                hideLoading();
+                showLoginError('Terjadi kesalahan saat login: ' + error.message);
+            }
+        }
+
+        async function showExamSelection() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('exam-selection-screen').classList.remove('hidden');
+            
+            // Display student name
+            document.getElementById('student-name-display').textContent = currentStudent.nama;
+            
+            showLoading('Memuat ujian yang tersedia...');
+            
+            try {
+                // Get active exams for student's class
+                const response = await fetch(systemConfig.appsScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: 'getActiveExams',
+                        spreadsheetId: systemConfig.spreadsheetId,
+                        studentClass: currentStudent.kelas
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Gagal memuat ujian');
+                
+                const data = await response.json();
+                const activeExams = data.exams || [];
+                
+                hideLoading();
+                displayAvailableExams(activeExams);
+                
+            } catch (error) {
+                hideLoading();
+                alert('Gagal memuat ujian: ' + error.message);
+            }
+        }
+
+        async function displayAvailableExams(exams) {
+            const container = document.getElementById('available-exams');
+            const noExamsDiv = document.getElementById('no-exams');
+            
+            if (exams.length === 0) {
+                container.classList.add('hidden');
+                noExamsDiv.classList.remove('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            noExamsDiv.classList.add('hidden');
+            
+            let html = '';
+            
+            for (const exam of exams) {
+                // Check if student has already completed this exam
+                const hasCompleted = await checkQuizCompletion(currentStudent.noInduk, exam.ujianId);
+                
+                const startTime = new Date(exam.tanggalMulai).toLocaleString('id-ID');
+                const endTime = new Date(exam.tanggalSelesai).toLocaleString('id-ID');
+                
+                html += `
+                    <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-2">${exam.namaUjian}</h3>
+                                <div class="space-y-2 text-sm text-gray-600">
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253z"></path>
+                                        </svg>
+                                        <span><strong>Mata Pelajaran:</strong> ${exam.mapel}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                        <span><strong>Kelas:</strong> ${exam.kelas}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <span><strong>Materi:</strong> ${exam.materi}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span><strong>Waktu:</strong> ${exam.waktuMenit} menit</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <span><strong>Periode:</strong> ${startTime} - ${endTime}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ml-6">
+                                ${hasCompleted ? 
+                                    `<div class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium">
+                                        ✅ Sudah Dikerjakan
+                                    </div>` :
+                                    `<button onclick="startExam('${exam.ujianId}')" 
+                                            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                        🚀 Mulai Ujian
+                                    </button>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        async function startExam(examId) {
+            showLoading('Memuat soal ujian...');
+            
+            try {
+                await loadQuestionsData(examId);
+                
+                if (allQuestions.length === 0) {
+                    hideLoading();
+                    alert('Tidak ada soal yang tersedia untuk ujian ini');
+                    return;
+                }
+                
+                hideLoading();
+                startQuiz();
+                
+            } catch (error) {
+                hideLoading();
+                alert('Gagal memuat soal: ' + error.message);
+            }
+        }
+
+        function refreshExams() {
+            showExamSelection();
+        }
+
+        function logoutStudent() {
+            currentStudent = null;
+            currentExam = null;
+            document.getElementById('exam-selection-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            
+            // Clear form
+            document.getElementById('login-student-id').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        async function checkQuizCompletion(studentId, examId) {
+            try {
+                const response = await fetch(systemConfig.appsScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: 'checkCompletion',
+                        spreadsheetId: systemConfig.spreadsheetId,
+                        studentId: studentId,
+                        examId: examId
+                    })
+                });
+                
+                const data = await response.json();
+                return data.completed || false;
+            } catch (error) {
+                console.error('Error checking completion:', error);
+                return false;
+            }
+        }
+
+        // Quiz Functions
+        function startQuiz() {
+            document.getElementById('exam-selection-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            
+            // Update progress text
+            document.getElementById('progress-text').textContent = `0 dari ${allQuestions.length} soal`;
+            
+            startTimer();
+            displayQuestion();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishQuiz();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function displayQuestion() {
+            const question = allQuestions[currentQuestionIndex];
+            const container = document.getElementById('question-container');
+            
+            let html = `
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                            ${getQuestionTypeLabel(question.type)}
+                        </span>
+                        <span class="text-gray-500 text-sm">
+                            Soal ${currentQuestionIndex + 1} dari ${allQuestions.length}
+                        </span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-6">${question.question}</h3>
+                </div>
+            `;
+
+            switch (question.type) {
+                case 'multipleChoice':
+                    html += renderMultipleChoice(question);
+                    break;
+                case 'multipleChoiceComplex':
+                    html += renderMultipleChoiceComplex(question);
+                    break;
+                case 'matching':
+                    html += renderMatching(question);
+                    break;
+                case 'fillInBlank':
+                    html += renderFillInBlank(question);
+                    break;
+            }
+
+            container.innerHTML = html;
+            updateProgress();
+            updateNavigationButtons();
+        }
+
+        function getQuestionTypeLabel(type) {
+            const labels = {
+                'multipleChoice': 'Pilihan Ganda',
+                'multipleChoiceComplex': 'Pilihan Ganda Kompleks',
+                'matching': 'Menjodohkan',
+                'fillInBlank': 'Isian Singkat'
+            };
+            return labels[type];
+        }
+
+        function renderMultipleChoice(question) {
+            let html = '<div class="space-y-3">';
+            question.options.forEach((option, index) => {
+                const isSelected = userAnswers[currentQuestionIndex] === index;
+                html += `
+                    <button onclick="selectMultipleChoice(${index})" 
+                            class="option-button w-full text-left p-4 border-2 rounded-lg transition-all ${
+                                isSelected ? 'selected text-white border-blue-500' : 'border-gray-200 hover:border-blue-300'
+                            }">
+                        <span class="font-medium">${String.fromCharCode(97 + index)}.</span> ${option}
+                    </button>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function renderMultipleChoiceComplex(question) {
+            let html = '<div class="space-y-3">';
+            html += '<p class="text-sm text-blue-600 font-medium mb-4">💡 Anda dapat memilih lebih dari satu jawaban!</p>';
+            
+            question.options.forEach((option, index) => {
+                const isSelected = userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].includes(index);
+                html += `
+                    <button onclick="toggleMultipleChoiceComplex(${index})" 
+                            class="option-button w-full text-left p-4 border-2 rounded-lg transition-all ${
+                                isSelected ? 'selected text-white border-blue-500' : 'border-gray-200 hover:border-blue-300'
+                            }">
+                        <span class="font-medium">${String.fromCharCode(97 + index)}.</span> ${option}
+                    </button>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function renderMatching(question) {
+            let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+            
+            // Left column
+            html += '<div class="space-y-3">';
+            html += '<h4 class="font-semibold text-gray-700 mb-3">Pernyataan:</h4>';
+            question.leftItems.forEach((item, index) => {
+                html += `
+                    <div class="p-3 bg-blue-50 rounded-lg border">
+                        <span class="font-medium text-blue-800">${index + 1}.</span> ${item}
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            // Right column
+            html += '<div class="space-y-3">';
+            html += '<h4 class="font-semibold text-gray-700 mb-3">Pilihan Jawaban:</h4>';
+            question.rightItems.forEach((item, index) => {
+                html += `
+                    <div class="p-3 bg-gray-50 rounded-lg border">
+                        <span class="font-medium text-gray-800">${String.fromCharCode(97 + index)}.</span> ${item}
+                    </div>
+                `;
+            });
+            html += '</div>';
+            html += '</div>';
+
+            // Matching inputs
+            html += '<div class="mt-6">';
+            html += '<h4 class="font-semibold text-gray-700 mb-3">Jawaban Anda:</h4>';
+            html += '<div class="grid grid-cols-1 md:grid-cols-5 gap-4">';
+            
+            question.leftItems.forEach((_, index) => {
+                const currentAnswer = userAnswers[currentQuestionIndex] ? userAnswers[currentQuestionIndex][index] : '';
+                html += `
+                    <div class="text-center">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">${index + 1}</label>
+                        <select onchange="updateMatching(${index}, this.value)" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Pilih...</option>
+                            ${question.rightItems.map((_, i) => 
+                                `<option value="${i}" ${currentAnswer == i ? 'selected' : ''}>${String.fromCharCode(97 + i)}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+            
+            return html;
+        }
+
+        function renderFillInBlank(question) {
+            const currentAnswer = userAnswers[currentQuestionIndex] || '';
+            return `
+                <div class="space-y-4">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                        <p class="text-sm text-yellow-800">💡 Isilah dengan jawaban yang tepat dan singkat!</p>
+                    </div>
+                    <input type="text" 
+                           value="${currentAnswer}"
+                           onchange="updateFillInBlank(this.value)"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                           placeholder="Ketik jawaban Anda di sini...">
+                </div>
+            `;
+        }
+
+        // Answer handling functions
+        function selectMultipleChoice(optionIndex) {
+            userAnswers[currentQuestionIndex] = optionIndex;
+            displayQuestion();
+        }
+
+        function toggleMultipleChoiceComplex(optionIndex) {
+            if (!userAnswers[currentQuestionIndex]) {
+                userAnswers[currentQuestionIndex] = [];
+            }
+            
+            const answers = userAnswers[currentQuestionIndex];
+            const index = answers.indexOf(optionIndex);
+            
+            if (index > -1) {
+                answers.splice(index, 1);
+            } else {
+                answers.push(optionIndex);
+            }
+            
+            displayQuestion();
+        }
+
+        function updateMatching(questionIndex, value) {
+            if (!userAnswers[currentQuestionIndex]) {
+                userAnswers[currentQuestionIndex] = new Array(allQuestions[currentQuestionIndex].leftItems.length).fill('');
+            }
+            userAnswers[currentQuestionIndex][questionIndex] = value;
+        }
+
+        function updateFillInBlank(value) {
+            userAnswers[currentQuestionIndex] = value.trim();
+        }
+
+        // Navigation functions
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < allQuestions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            }
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            
+            prevBtn.disabled = currentQuestionIndex === 0;
+            
+            if (currentQuestionIndex === allQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                finishBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                finishBtn.classList.add('hidden');
+            }
+        }
+
+        function updateProgress() {
+            const answered = userAnswers.filter(answer => answer !== null && answer !== '' && answer !== undefined).length;
+            const percentage = (answered / allQuestions.length) * 100;
+            
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = `${answered} dari ${allQuestions.length} soal`;
+        }
+
+        function finishQuiz() {
+            clearInterval(timerInterval);
+            calculateResults();
+            showResults();
+        }
+
+        function calculateResults() {
+            let totalScore = 0;
+            let correctAnswers = 0;
+            let maxScore = 0;
+
+            allQuestions.forEach((question, index) => {
+                maxScore += question.points;
+                const userAnswer = userAnswers[index];
+                let isCorrect = false;
+
+                switch (question.type) {
+                    case 'multipleChoice':
+                        isCorrect = userAnswer === question.correct;
+                        break;
+                    case 'multipleChoiceComplex':
+                        if (userAnswer && Array.isArray(userAnswer) && Array.isArray(question.correct)) {
+                            const sortedUser = [...userAnswer].sort();
+                            const sortedCorrect = [...question.correct].sort();
+                            isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
+                        }
+                        break;
+                    case 'matching':
+                        if (userAnswer && Array.isArray(userAnswer)) {
+                            isCorrect = userAnswer.every((answer, i) => parseInt(answer) === question.correct[i]);
+                        }
+                        break;
+                    case 'fillInBlank':
+                        if (userAnswer && typeof userAnswer === 'string') {
+                            const normalizedAnswer = userAnswer.toLowerCase().trim();
+                            isCorrect = question.correct.some(correct => 
+                                correct.toLowerCase().trim() === normalizedAnswer
+                            );
+                        }
+                        break;
+                }
+
+                if (isCorrect) {
+                    totalScore += question.points;
+                    correctAnswers++;
+                }
+            });
+
+            window.quizResults = {
+                student: currentStudent,
+                totalScore,
+                maxScore,
+                correctAnswers,
+                totalQuestions: allQuestions.length,
+                percentage: Math.round((totalScore / maxScore) * 100),
+                timeSpent: 1800 - timeLeft,
+                answers: userAnswers,
+                questions: allQuestions,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        function showResults() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+
+            const results = window.quizResults;
+            
+            // Update result display
+            document.getElementById('total-score').textContent = `${results.totalScore}/${results.maxScore}`;
+            document.getElementById('correct-answers').textContent = `${results.correctAnswers}/${results.totalQuestions}`;
+            document.getElementById('percentage').textContent = `${results.percentage}%`;
+
+            // Set result icon and message
+            const resultIcon = document.getElementById('result-icon');
+            const resultMessage = document.getElementById('result-message');
+            
+            if (results.percentage >= 80) {
+                resultIcon.className = 'w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center bg-green-100';
+                resultIcon.innerHTML = '<svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+                resultMessage.textContent = `Excellent ${results.student.nama}! Pemahaman Anda tentang materi Infak sangat baik!`;
+            } else if (results.percentage >= 60) {
+                resultIcon.className = 'w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center bg-yellow-100';
+                resultIcon.innerHTML = '<svg class="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>';
+                resultMessage.textContent = `Good ${results.student.nama}! Anda sudah memahami sebagian besar materi, tingkatkan lagi ya!`;
+            } else {
+                resultIcon.className = 'w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center bg-red-100';
+                resultIcon.innerHTML = '<svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+                resultMessage.textContent = `${results.student.nama}, perlu belajar lebih giat lagi. Jangan menyerah, terus semangat!`;
+            }
+
+            // Show detailed results
+            showDetailedResults();
+        }
+
+        function showDetailedResults() {
+            const results = window.quizResults;
+            const container = document.getElementById('detailed-results');
+            
+            let html = '<div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">';
+            
+            // Group by question type
+            const typeGroups = {
+                'multipleChoice': { name: 'Pilihan Ganda', questions: [] },
+                'multipleChoiceComplex': { name: 'Pilihan Ganda Kompleks', questions: [] },
+                'matching': { name: 'Menjodohkan', questions: [] },
+                'fillInBlank': { name: 'Isian Singkat', questions: [] }
+            };
+
+            results.questions.forEach((question, index) => {
+                const userAnswer = results.answers[index];
+                let isCorrect = false;
+
+                switch (question.type) {
+                    case 'multipleChoice':
+                        isCorrect = userAnswer === question.correct;
+                        break;
+                    case 'multipleChoiceComplex':
+                        if (userAnswer && Array.isArray(userAnswer)) {
+                            const sortedUser = [...userAnswer].sort();
+                            const sortedCorrect = [...question.correct].sort();
+                            isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
+                        }
+                        break;
+                    case 'matching':
+                        if (userAnswer && Array.isArray(userAnswer)) {
+                            isCorrect = userAnswer.every((answer, i) => parseInt(answer) === question.correct[i]);
+                        }
+                        break;
+                    case 'fillInBlank':
+                        if (userAnswer && typeof userAnswer === 'string') {
+                            const normalizedAnswer = userAnswer.toLowerCase().trim();
+                            isCorrect = question.correct.some(correct => 
+                                correct.toLowerCase().trim() === normalizedAnswer
+                            );
+                        }
+                        break;
+                }
+
+                typeGroups[question.type].questions.push({
+                    index: index + 1,
+                    isCorrect,
+                    points: question.points
+                });
+            });
+
+            Object.values(typeGroups).forEach(group => {
+                if (group.questions.length > 0) {
+                    const correct = group.questions.filter(q => q.isCorrect).length;
+                    const total = group.questions.length;
+                    const totalPoints = group.questions.reduce((sum, q) => sum + (q.isCorrect ? q.points : 0), 0);
+                    const maxPoints = group.questions.reduce((sum, q) => sum + q.points, 0);
+                    
+                    html += `
+                        <div class="bg-white p-4 rounded-lg border">
+                            <h4 class="font-semibold text-gray-800 mb-2">${group.name}</h4>
+                            <div class="text-gray-600">
+                                <div>Benar: ${correct}/${total}</div>
+                                <div>Poin: ${totalPoints}/${maxPoints}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        async function saveResults() {
+            const results = window.quizResults;
+            
+            showLoading('Menyimpan hasil...');
+            
+            try {
+                const response = await fetch(systemConfig.appsScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveResults',
+                        spreadsheetId: systemConfig.spreadsheetId,
+                        results: {
+                            timestamp: new Date().toLocaleString('id-ID'),
+                            ujianId: currentExam.ujianId,
+                            namaUjian: currentExam.namaUjian,
+                            noInduk: results.student.noInduk,
+                            nama: results.student.nama,
+                            kelas: results.student.kelas,
+                            totalSkor: results.totalScore,
+                            skorMaksimal: results.maxScore,
+                            persentase: results.percentage,
+                            jawabanBenar: results.correctAnswers,
+                            totalSoal: results.totalQuestions,
+                            waktuPengerjaan: Math.floor(results.timeSpent / 60) + ' menit ' + (results.timeSpent % 60) + ' detik',
+                            detailJawaban: JSON.stringify(results.answers)
+                        }
+                    })
+                });
+                
+                if (response.ok) {
+                    hideLoading();
+                    alert(`✅ Hasil berhasil disimpan!\n\nUjian: ${currentExam.namaUjian}\nNama: ${results.student.nama}\nSkor: ${results.totalScore}/${results.maxScore} (${results.percentage}%)\n\nTerima kasih telah mengerjakan ujian!`);
+                } else {
+                    throw new Error('Gagal menyimpan hasil');
+                }
+                
+            } catch (error) {
+                hideLoading();
+                alert('❌ Gagal menyimpan hasil: ' + error.message);
+            }
+        }
+
+        function restartQuiz() {
+            // Reset all variables
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            timeLeft = 1800;
+            currentStudent = null;
+            currentExam = null;
+            
+            // Clear timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            // Reset displays
+            document.getElementById('login-student-id').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('timer').textContent = '30:00';
+            document.getElementById('progress-bar').style.width = '0%';
+            
+            // Show login screen
+            document.getElementById('results-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function showSetupGuide() {
+            const guideWindow = window.open('', '_blank', 'width=1000,height=700,scrollbars=yes');
+            guideWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Panduan Setup Google Sheets Integration</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                        .step { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+                        .code { background: #e8e8e8; padding: 10px; font-family: monospace; border-radius: 3px; white-space: pre-wrap; }
+                        h1 { color: #2563eb; }
+                        h2 { color: #1d4ed8; }
+                        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; }
+                        table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                    </style>
+                </head>
+                <body>
+                    <h1>🔗 Panduan Setup Google Sheets Integration</h1>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Penting:</strong> Ikuti langkah-langkah ini dengan teliti untuk memastikan sistem berjalan dengan baik.
+                    </div>
+
+                    <h2>📊 Struktur Google Spreadsheet</h2>
+                    
+                    <div class="step">
+                        <h3>Sheet 1: "Students" - Data Siswa</h3>
+                        <table>
+                            <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+                            <tr><td>noInduk</td><td>nama</td><td>kelas</td><td>password</td><td>status</td></tr>
+                            <tr><td>001</td><td>Ahmad Fauzi</td><td>5A</td><td>pass123</td><td>aktif</td></tr>
+                            <tr><td>002</td><td>Siti Aminah</td><td>5A</td><td>pass456</td><td>aktif</td></tr>
+                            <tr><td>003</td><td>Muhammad Ali</td><td>5B</td><td>pass789</td><td>aktif</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="step">
+                        <h3>Sheet 2: "Questions" - Bank Soal</h3>
+                        <table>
+                            <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th><th>J</th><th>K</th><th>L</th></tr>
+                            <tr><td>mapel</td><td>kelas</td><td>materi</td><td>type</td><td>question</td><td>option1</td><td>option2</td><td>option3</td><td>option4</td><td>correct</td><td>points</td><td>status</td></tr>
+                            <tr><td>Fikih</td><td>5A</td><td>Infak</td><td>multipleChoice</td><td>Anjuran bagi orang yang memiliki kelebihan harta...</td><td>berpuasa</td><td>salat</td><td>berniaga</td><td>infak</td><td>3</td><td>1</td><td>aktif</td></tr>
+                            <tr><td>Fikih</td><td>5A</td><td>Infak</td><td>fillInBlank</td><td>Infak berasal dari kata nafaqa, yang artinya ...</td><td></td><td></td><td></td><td></td><td>menafkah,membelanjakan harta</td><td>1</td><td>aktif</td></tr>
+                        </table>
+                        
+                        <h4>Tipe Soal yang Didukung:</h4>
+                        <ul>
+                            <li><strong>multipleChoice:</strong> Pilihan ganda biasa (correct = index jawaban benar, mulai dari 0)</li>
+                            <li><strong>multipleChoiceComplex:</strong> Pilihan ganda kompleks (correct = array index, contoh: [0,2])</li>
+                            <li><strong>matching:</strong> Menjodohkan (gunakan kolom tambahan untuk leftItems dan rightItems)</li>
+                            <li><strong>fillInBlank:</strong> Isian singkat (correct = array kemungkinan jawaban benar)</li>
+                        </ul>
+                    </div>
+
+                    <div class="step">
+                        <h3>Sheet 3: "Settings" - Pengaturan Ujian</h3>
+                        <table>
+                            <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th></tr>
+                            <tr><td>ujianId</td><td>namaUjian</td><td>mapel</td><td>kelas</td><td>materi</td><td>waktuMenit</td><td>tanggalMulai</td><td>tanggalSelesai</td><td>status</td></tr>
+                            <tr><td>UJ001</td><td>Ulangan Harian Infak</td><td>Fikih</td><td>5A</td><td>Infak</td><td>30</td><td>2024-01-15 08:00</td><td>2024-01-15 10:00</td><td>aktif</td></tr>
+                            <tr><td>UJ002</td><td>PTS Fikih Semester 1</td><td>Fikih</td><td>5A,5B</td><td>Infak,Zakat</td><td>60</td><td>2024-01-20 08:00</td><td>2024-01-20 12:00</td><td>nonaktif</td></tr>
+                        </table>
+                        <p><strong>Keterangan:</strong></p>
+                        <ul>
+                            <li><strong>kelas:</strong> Pisahkan dengan koma untuk multiple kelas (5A,5B)</li>
+                            <li><strong>materi:</strong> Pisahkan dengan koma untuk multiple materi (Infak,Zakat)</li>
+                            <li><strong>status:</strong> aktif/nonaktif - hanya ujian aktif yang muncul</li>
+                        </ul>
+                    </div>
+
+                    <div class="step">
+                        <h3>Sheet 4: "Results" - Hasil Asesmen</h3>
+                        <table>
+                            <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th><th>J</th><th>K</th><th>L</th><th>M</th></tr>
+                            <tr><td>timestamp</td><td>ujianId</td><td>namaUjian</td><td>noInduk</td><td>nama</td><td>kelas</td><td>totalSkor</td><td>skorMaksimal</td><td>persentase</td><td>jawabanBenar</td><td>totalSoal</td><td>waktuPengerjaan</td><td>detailJawaban</td></tr>
+                        </table>
+                    </div>
+
+                    <h2>📝 Google Apps Script Code</h2>
+                    
+                    <div class="step">
+                        <h3>Langkah 1: Buat Google Apps Script</h3>
+                        <p>1. Buka Google Sheets yang sudah dibuat</p>
+                        <p>2. Klik Extensions → Apps Script</p>
+                        <p>3. Hapus kode default dan ganti dengan kode berikut:</p>
+                        
+                        <div class="code">function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const action = data.action;
+    const spreadsheetId = data.spreadsheetId;
+    
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    
+    switch (action) {
+      case 'test':
+        return ContentService
+          .createTextOutput(JSON.stringify({status: 'success', message: 'Connection OK'}))
+          .setMimeType(ContentService.MimeType.JSON);
+          
+      case 'getStudents':
+        return getStudents(ss);
+        
+      case 'getActiveExams':
+        return getActiveExams(ss, data.studentClass);
+        
+      case 'getQuestions':
+        return getQuestions(ss, data.examId);
+        
+      case 'checkCompletion':
+        return checkCompletion(ss, data.studentId, data.examId);
+        
+      case 'saveResults':
+        return saveResults(ss, data.results);
+        
+      default:
+        throw new Error('Unknown action: ' + action);
+    }
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({status: 'error', message: error.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getStudents(ss) {
+  const sheet = ss.getSheetByName('Students');
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const students = [];
+  
+  for (let i = 1; i < data.length; i++) {
+    const student = {};
+    headers.forEach((header, index) => {
+      student[header] = data[i][index];
+    });
+    if (student.status === 'aktif') {
+      students.push(student);
+    }
+  }
+  
+  return ContentService
+    .createTextOutput(JSON.stringify({students: students}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getActiveExams(ss, studentClass) {
+  const sheet = ss.getSheetByName('Settings');
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const activeExams = [];
+  const now = new Date();
+  
+  for (let i = 1; i < data.length; i++) {
+    const exam = {};
+    headers.forEach((header, index) => {
+      exam[header] = data[i][index];
+    });
+    
+    // Check if exam is active and within time range
+    if (exam.status === 'aktif') {
+      const startTime = new Date(exam.tanggalMulai);
+      const endTime = new Date(exam.tanggalSelesai);
+      
+      // Check if current time is within exam period
+      if (now >= startTime && now <= endTime) {
+        // Check if student's class is included
+        const allowedClasses = exam.kelas.split(',').map(k => k.trim());
+        if (allowedClasses.includes(studentClass)) {
+          activeExams.push(exam);
+        }
+      }
+    }
+  }
+  
+  return ContentService
+    .createTextOutput(JSON.stringify({exams: activeExams}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getQuestions(ss, examId) {
+  // Get exam settings first
+  const settingsSheet = ss.getSheetByName('Settings');
+  const settingsData = settingsSheet.getDataRange().getValues();
+  const settingsHeaders = settingsData[0];
+  
+  let examSettings = null;
+  for (let i = 1; i < settingsData.length; i++) {
+    const exam = {};
+    settingsHeaders.forEach((header, index) => {
+      exam[header] = settingsData[i][index];
+    });
+    if (exam.ujianId === examId) {
+      examSettings = exam;
+      break;
+    }
+  }
+  
+  if (!examSettings) {
+    throw new Error('Exam not found');
+  }
+  
+  // Get questions based on exam settings
+  const questionsSheet = ss.getSheetByName('Questions');
+  const questionsData = questionsSheet.getDataRange().getValues();
+  const questionsHeaders = questionsData[0];
+  const questions = [];
+  
+  const allowedClasses = examSettings.kelas.split(',').map(k => k.trim());
+  const allowedMateri = examSettings.materi.split(',').map(m => m.trim());
+  
+  for (let i = 1; i < questionsData.length; i++) {
+    const question = {};
+    questionsHeaders.forEach((header, index) => {
+      question[header] = questionsData[i][index];
+    });
+    
+    // Filter questions based on exam criteria
+    if (question.status === 'aktif' && 
+        question.mapel === examSettings.mapel &&
+        allowedClasses.includes(question.kelas) &&
+        allowedMateri.includes(question.materi)) {
+      
+      // Process options
+      question.options = [question.option1, question.option2, question.option3, question.option4].filter(opt => opt);
+      
+      // Process correct answers
+      if (question.type === 'multipleChoiceComplex') {
+        question.correct = JSON.parse(question.correct);
+      } else if (question.type === 'fillInBlank') {
+        question.correct = question.correct.split(',').map(s => s.trim());
+      } else if (question.type === 'matching') {
+        question.correct = JSON.parse(question.correct);
+        question.leftItems = JSON.parse(question.leftItems || '[]');
+        question.rightItems = JSON.parse(question.rightItems || '[]');
+      } else {
+        question.correct = parseInt(question.correct);
+      }
+      
+      questions.push(question);
+    }
+  }
+  
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      questions: questions,
+      examSettings: examSettings
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function checkCompletion(ss, studentId, examId) {
+  const sheet = ss.getSheetByName('Results');
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === examId && data[i][3] === studentId) { // Column B is examId, Column D is noInduk
+      return ContentService
+        .createTextOutput(JSON.stringify({completed: true}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  return ContentService
+    .createTextOutput(JSON.stringify({completed: false}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function saveResults(ss, results) {
+  const sheet = ss.getSheetByName('Results');
+  
+  sheet.appendRow([
+    results.timestamp,
+    results.ujianId,
+    results.namaUjian,
+    results.noInduk,
+    results.nama,
+    results.kelas,
+    results.totalSkor,
+    results.skorMaksimal,
+    results.persentase,
+    results.jawabanBenar,
+    results.totalSoal,
+    results.waktuPengerjaan,
+    results.detailJawaban
+  ]);
+  
+  return ContentService
+    .createTextOutput(JSON.stringify({status: 'success', message: 'Results saved'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+                    </div>
+
+                    <div class="step">
+                        <h3>Langkah 2: Deploy Apps Script</h3>
+                        <p>1. Klik Deploy → New deployment</p>
+                        <p>2. Pilih type: Web app</p>
+                        <p>3. Execute as: Me</p>
+                        <p>4. Who has access: Anyone</p>
+                        <p>5. Klik Deploy</p>
+                        <p>6. Copy URL yang diberikan</p>
+                    </div>
+
+                    <div class="step">
+                        <h3>Langkah 3: Konfigurasi Sistem</h3>
+                        <p>1. Masukkan URL Apps Script ke form konfigurasi</p>
+                        <p>2. Masukkan Spreadsheet ID (dari URL Google Sheets)</p>
+                        <p>3. Klik "Test Koneksi" untuk memverifikasi</p>
+                        <p>4. Jika berhasil, klik "Inisialisasi Sistem"</p>
+                    </div>
+
+                    <h2>🔧 Contoh Data untuk Testing</h2>
+                    
+                    <div class="step">
+                        <h3>Data Siswa (Sheet "Students"):</h3>
+                        <div class="code">noInduk	nama	kelas	password	status
+001	Ahmad Fauzi	5A	test123	aktif
+002	Siti Aminah	5A	test456	aktif
+003	Muhammad Ali	5B	test789	aktif</div>
+                    </div>
+
+                    <div class="step">
+                        <h3>Data Soal (Sheet "Questions"):</h3>
+                        <div class="code">mapel	kelas	materi	type	question	option1	option2	option3	option4	correct	points	status
+Fikih	5A	Infak	multipleChoice	Anjuran bagi orang yang memiliki kelebihan harta untuk dirinya dan orang yang ditanggung adalah ….	berpuasa	salat	berniaga	infak	3	1	aktif
+Fikih	5A	Infak	fillInBlank	Infak berasal dari kata nafaqa, yang artinya ….				menafkah,membelanjakan harta	1	aktif
+Fikih	5B	Zakat	multipleChoice	Zakat fitrah wajib dikeluarkan pada bulan ….	Ramadan	Syawal	Dzulhijjah	Muharram	0	1	aktif</div>
+                    </div>
+
+                    <div class="step">
+                        <h3>Data Pengaturan Ujian (Sheet "Settings"):</h3>
+                        <div class="code">ujianId	namaUjian	mapel	kelas	materi	waktuMenit	tanggalMulai	tanggalSelesai	status
+UJ001	Ulangan Harian Infak	Fikih	5A	Infak	30	2024-01-15 08:00	2024-01-15 10:00	aktif
+UJ002	PTS Fikih Semester 1	Fikih	5A,5B	Infak,Zakat	60	2024-01-20 08:00	2024-01-20 12:00	nonaktif</div>
+                    </div>
+
+                    <h2>🚀 Cara Penggunaan</h2>
+                    
+                    <div class="step">
+                        <ol>
+                            <li>Setup Google Sheets dengan struktur yang benar</li>
+                            <li>Deploy Google Apps Script</li>
+                            <li>Konfigurasi sistem dengan URL dan Spreadsheet ID</li>
+                            <li>Test koneksi dan inisialisasi sistem</li>
+                            <li>Siswa login dengan No. Induk dan Password</li>
+                            <li>Sistem otomatis mengambil soal dari Google Sheets</li>
+                            <li>Hasil otomatis tersimpan ke Google Sheets</li>
+                        </ol>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button onclick="window.close()" style="background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                            Tutup Panduan
+                        </button>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        // Utility Functions
+        function showLoading(message) {
+            document.getElementById('loading-text').textContent = message;
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        // Initialize the system when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // System is ready for configuration
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d4848f800a5fd8',t:'MTc1NDg4MTU5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
