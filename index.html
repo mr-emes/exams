@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        accent: '#F59E0B'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-bar { transition: width 0.3s ease; }
+        .question-card { transition: all 0.3s ease; }
+        .option-hover:hover { transform: translateX(4px); }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+            <p class="text-gray-600 font-medium">Memuat aplikasi...</p>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="loginForm" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 border-4 border-primary shadow-lg">
+                    <img src="https://i.imgur.com/0Laf7Zu.png" alt="MIN Singkawang Logo" class="w-full h-full object-cover" onerror="this.src=''; this.alt='Logo failed to load'; this.style.display='none';">
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">MIN SINGKAWANG</h1>
+                <p class="text-gray-600 font-medium">Madrasah Maju, Bermutu, Mendunia</p>
+            </div>
+            
+            <form id="loginFormElement" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">User ID</label>
+                    <input type="text" id="userId" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                           placeholder="Masukkan User ID">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                           placeholder="Masukkan Password">
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-6 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                    Masuk
+                </button>
+            </form>
+            
+            <div id="loginError" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Quiz Interface -->
+    <div id="quizInterface" class="hidden min-h-screen p-4">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl card-shadow p-6 mb-6 animate-fade-in">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 id="examTitle" class="text-2xl font-bold text-gray-800 mb-2">Nama Ujian - Mapel - Kelas</h1>
+                    <p id="examSubtitle" class="text-gray-600">Materi Ujian</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center space-x-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary" id="timer">00:00</div>
+                        <div class="text-sm text-gray-500">Waktu Tersisa</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-accent" id="questionCounter">1/20</div>
+                        <div class="text-sm text-gray-500">Soal</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mt-6">
+                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Progress</span>
+                    <span id="progressText">5%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-gradient-to-r from-primary to-accent h-2 rounded-full progress-bar" style="width: 5%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="bg-white rounded-2xl card-shadow p-8 mb-6 animate-fade-in question-card">
+            <div class="mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium mr-3" id="questionType">Pilihan Ganda</span>
+                    <span class="text-gray-500 text-sm" id="questionNumber">Soal 1</span>
+                </div>
+                <h2 id="questionText" class="text-xl font-semibold text-gray-800 leading-relaxed">
+                    Pertanyaan akan muncul di sini...
+                </h2>
+            </div>
+            
+            <div id="optionsContainer" class="space-y-3">
+                <!-- Options will be populated here -->
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="bg-white rounded-2xl card-shadow p-6 animate-fade-in">
+            <div class="flex justify-between items-center">
+                <button id="prevBtn" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    ← Sebelumnya
+                </button>
+                
+                <div class="flex space-x-3">
+                    <button id="markBtn" class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all duration-200">
+                        🏷️ Tandai
+                    </button>
+                    <button id="nextBtn" class="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                        Selanjutnya →
+                    </button>
+                </div>
+                
+                <button id="finishBtn" class="hidden px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                    Selesai
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-2xl animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Ujian Selesai!</h1>
+                <p class="text-gray-600">Hasil ujian Anda telah tersimpan</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600" id="finalScore">0</div>
+                        <div class="text-blue-800 font-medium">Skor</div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600" id="finalGrade">0</div>
+                        <div class="text-green-800 font-medium">Nilai</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Detail Hasil:</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-600">Nama:</span>
+                        <span class="font-medium ml-2" id="resultName">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Kelas:</span>
+                        <span class="font-medium ml-2" id="resultClass">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Ujian:</span>
+                        <span class="font-medium ml-2" id="resultExam">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Waktu:</span>
+                        <span class="font-medium ml-2" id="resultTime">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button onclick="location.reload()" 
+                        class="px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                    Kembali ke Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Apps Script Web App URL
+        const CONFIG = {
+            WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz57L7gYUoovZjvpdgxg1PfNUAcF23d3b-1pJk2BvtYZD7wRz-wQw_xCZpbfayJEUmm/exec',
+            SPREADSHEET_ID: '1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk'
+        };
+
+        // Global variables
+        let currentUser = null;
+        let currentExam = null;
+        let questions = [];
+        let shuffledQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+        let markedQuestions = new Set();
+        let examTimer = null;
+        let timeRemaining = 0;
+
+        // Sample data for demo (replace with actual Google Sheets data)
+        const SAMPLE_DATA = {
+            students: [
+                { userId: 'demo', password: 'demo', name: 'Demo User', class: 'XII IPA 1' }
+            ],
+            exam: {
+                id: 1,
+                name: 'Ujian Matematika',
+                subject: 'Matematika',
+                material: 'Integral dan Diferensial',
+                class: 'XII IPA 1',
+                date: '2024-01-15',
+                time: '08:00',
+                duration: 90,
+                status: 'active'
+            },
+            questions: [
+                {
+                    id: 1, examId: 1, type: 'PG', score: 10,
+                    question: 'Hasil dari integral ∫2x dx adalah...',
+                    optionA: 'x² + C', optionB: '2x² + C', optionC: 'x²/2 + C', optionD: '2x + C',
+                    key: 'A'
+                },
+                {
+                    id: 2, examId: 1, type: 'PG', score: 10,
+                    question: 'Turunan dari f(x) = 3x² + 2x - 1 adalah...',
+                    optionA: '6x + 2', optionB: '3x + 2', optionC: '6x - 1', optionD: '3x² + 2',
+                    key: 'A'
+                },
+                {
+                    id: 3, examId: 1, type: 'PJ', score: 15,
+                    question: 'Manakah dari berikut ini yang merupakan bilangan prima? (Pilih semua yang benar)',
+                    optionA: '17', optionB: '21', optionC: '23', optionD: '25',
+                    key: 'A,C'
+                },
+                {
+                    id: 4, examId: 1, type: 'PJ', score: 20,
+                    question: 'Sifat-sifat fungsi kuadrat f(x) = ax² + bx + c dengan a > 0 adalah... (Pilih semua yang benar)',
+                    optionA: 'Grafik membuka ke atas', optionB: 'Memiliki nilai minimum', optionC: 'Grafik membuka ke bawah', optionD: 'Memiliki sumbu simetri',
+                    key: 'A,B,D'
+                }
+            ]
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('loginForm').classList.remove('hidden');
+            }, 1500);
+
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('loginFormElement').addEventListener('submit', handleLogin);
+            
+            // Quiz navigation
+            document.getElementById('prevBtn').addEventListener('click', previousQuestion);
+            document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+            document.getElementById('markBtn').addEventListener('click', toggleMark);
+            document.getElementById('finishBtn').addEventListener('click', finishExam);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId').value;
+            const password = document.getElementById('password').value;
+            
+            // Show loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Memuat...';
+            submitBtn.disabled = true;
+
+            try {
+                // In real implementation, this would call Google Sheets API
+                const user = await authenticateUser(userId, password);
+                
+                if (user) {
+                    currentUser = user;
+                    await loadExamData();
+                    showQuizInterface();
+                } else {
+                    showError('User ID atau Password salah');
+                }
+            } catch (error) {
+                showError('Terjadi kesalahan saat login');
+                console.error('Login error:', error);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function authenticateUser(userId, password) {
+            try {
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'authenticate',
+                        userId: userId,
+                        password: password
+                    })
+                });
+                
+                const result = await response.json();
+                return result.success ? result.data : null;
+            } catch (error) {
+                console.error('Authentication API error:', error);
+                return null;
+            }
+        }
+
+        async function loadExamData() {
+            try {
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getExamData',
+                        userId: currentUser.userId
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    currentExam = result.data.exam;
+                    questions = result.data.questions;
+                    
+                    // Shuffle questions while maintaining type order
+                    shuffledQuestions = shuffleQuestionsByType(questions);
+                    timeRemaining = currentExam.duration * 60; // Convert to seconds
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Load exam data API error:', error);
+                throw error;
+            }
+        }
+
+        function shuffleQuestionsByType(questions) {
+            // Group questions by type
+            const questionsByType = {};
+            questions.forEach(q => {
+                if (!questionsByType[q.type]) {
+                    questionsByType[q.type] = [];
+                }
+                questionsByType[q.type].push(q);
+            });
+
+            // Shuffle within each type and combine
+            let shuffled = [];
+            Object.keys(questionsByType).forEach(type => {
+                const typeQuestions = questionsByType[type];
+                // Shuffle array
+                for (let i = typeQuestions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [typeQuestions[i], typeQuestions[j]] = [typeQuestions[j], typeQuestions[i]];
+                }
+                shuffled = shuffled.concat(typeQuestions);
+            });
+
+            // Shuffle options for each question
+            shuffled.forEach(q => {
+                const options = [
+                    { key: 'A', text: q.optionA },
+                    { key: 'B', text: q.optionB },
+                    { key: 'C', text: q.optionC },
+                    { key: 'D', text: q.optionD }
+                ];
+                
+                // Shuffle options
+                for (let i = options.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [options[i], options[j]] = [options[j], options[i]];
+                }
+                
+                q.shuffledOptions = options;
+            });
+
+            return shuffled;
+        }
+
+        function showQuizInterface() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('quizInterface').classList.remove('hidden');
+            
+            // Set exam info
+            document.getElementById('examTitle').textContent = 
+                `${currentExam.name} - ${currentExam.subject} - ${currentExam.class}`;
+            document.getElementById('examSubtitle').textContent = currentExam.material;
+            
+            // Start timer
+            startTimer();
+            
+            // Show first question
+            showQuestion(0);
+        }
+
+        function startTimer() {
+            examTimer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(examTimer);
+                    finishExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function showQuestion(index) {
+            if (index < 0 || index >= shuffledQuestions.length) return;
+            
+            currentQuestionIndex = index;
+            const question = shuffledQuestions[index];
+            
+            // Update question info
+            document.getElementById('questionType').textContent = question.type;
+            document.getElementById('questionNumber').textContent = `Soal ${index + 1}`;
+            document.getElementById('questionText').textContent = question.question;
+            
+            // Update counter and progress
+            document.getElementById('questionCounter').textContent = `${index + 1}/${shuffledQuestions.length}`;
+            const progress = ((index + 1) / shuffledQuestions.length) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${Math.round(progress)}%`;
+            
+            // Show options
+            showOptions(question);
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').classList.toggle('hidden', index === shuffledQuestions.length - 1);
+            document.getElementById('finishBtn').classList.toggle('hidden', index !== shuffledQuestions.length - 1);
+            
+            // Update mark button
+            const markBtn = document.getElementById('markBtn');
+            if (markedQuestions.has(question.id)) {
+                markBtn.textContent = '🏷️ Ditandai';
+                markBtn.classList.add('bg-yellow-600');
+            } else {
+                markBtn.textContent = '🏷️ Tandai';
+                markBtn.classList.remove('bg-yellow-600');
+            }
+        }
+
+        function showOptions(question) {
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+            
+            // Add instruction for PJ type
+            if (question.type === 'PJ') {
+                const instruction = document.createElement('div');
+                instruction.className = 'mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg';
+                instruction.innerHTML = `
+                    <div class="flex items-center text-yellow-800">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="font-medium">Pilihan Jamak: Anda dapat memilih lebih dari satu jawaban</span>
+                    </div>
+                `;
+                container.appendChild(instruction);
+            }
+            
+            question.shuffledOptions.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option-hover cursor-pointer p-4 border-2 border-gray-200 rounded-lg transition-all duration-200 hover:border-primary hover:bg-blue-50';
+                
+                let isSelected = false;
+                if (question.type === 'PG') {
+                    isSelected = userAnswers[question.id] === option.key;
+                } else if (question.type === 'PJ') {
+                    const selectedAnswers = userAnswers[question.id] ? userAnswers[question.id].split(',') : [];
+                    isSelected = selectedAnswers.includes(option.key);
+                }
+                
+                if (isSelected) {
+                    optionDiv.classList.add('border-primary', 'bg-blue-50');
+                }
+                
+                const inputType = question.type === 'PG' ? 'radio' : 'checkbox';
+                const inputShape = question.type === 'PG' ? 'rounded-full' : 'rounded';
+                
+                optionDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 ${inputShape} border-2 ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'} flex items-center justify-center mr-3">
+                            ${isSelected ? (question.type === 'PG' ? '<div class="w-3 h-3 bg-white rounded-full"></div>' : '<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>') : ''}
+                        </div>
+                        <span class="font-medium text-gray-700 mr-2">${option.key}.</span>
+                        <span class="text-gray-800">${option.text}</span>
+                    </div>
+                `;
+                
+                optionDiv.addEventListener('click', () => selectOption(question.id, option.key, question.type));
+                container.appendChild(optionDiv);
+            });
+        }
+
+        function selectOption(questionId, optionKey, questionType) {
+            if (questionType === 'PG') {
+                userAnswers[questionId] = optionKey;
+            } else if (questionType === 'PJ') {
+                const currentAnswers = userAnswers[questionId] ? userAnswers[questionId].split(',') : [];
+                const index = currentAnswers.indexOf(optionKey);
+                
+                if (index > -1) {
+                    // Remove if already selected
+                    currentAnswers.splice(index, 1);
+                } else {
+                    // Add if not selected
+                    currentAnswers.push(optionKey);
+                }
+                
+                // Sort answers to maintain consistent order
+                currentAnswers.sort();
+                userAnswers[questionId] = currentAnswers.length > 0 ? currentAnswers.join(',') : '';
+            }
+            
+            showQuestion(currentQuestionIndex); // Refresh to show selection
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                showQuestion(currentQuestionIndex - 1);
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < shuffledQuestions.length - 1) {
+                showQuestion(currentQuestionIndex + 1);
+            }
+        }
+
+        function toggleMark() {
+            const question = shuffledQuestions[currentQuestionIndex];
+            if (markedQuestions.has(question.id)) {
+                markedQuestions.delete(question.id);
+            } else {
+                markedQuestions.add(question.id);
+            }
+            showQuestion(currentQuestionIndex); // Refresh to show mark status
+        }
+
+        async function finishExam() {
+            if (examTimer) {
+                clearInterval(examTimer);
+            }
+            
+            // Calculate score based on points/scores
+            let totalScore = 0;
+            let maxPossibleScore = 0;
+            
+            shuffledQuestions.forEach(question => {
+                maxPossibleScore += question.score;
+                
+                const userAnswer = userAnswers[question.id] || '';
+                const correctAnswer = question.key;
+                
+                if (question.type === 'PG') {
+                    // Single choice - full points if correct, 0 if wrong
+                    if (userAnswer === correctAnswer) {
+                        totalScore += question.score;
+                    }
+                } else if (question.type === 'PJ') {
+                    // Multiple choice - partial scoring
+                    const userAnswerArray = userAnswer ? userAnswer.split(',').sort() : [];
+                    const correctAnswerArray = correctAnswer.split(',').sort();
+                    
+                    if (userAnswerArray.length === 0) {
+                        // No answer given
+                        totalScore += 0;
+                    } else if (userAnswerArray.join(',') === correctAnswerArray.join(',')) {
+                        // Perfect match - full points
+                        totalScore += question.score;
+                    } else {
+                        // Partial scoring based on correct selections
+                        let correctSelections = 0;
+                        let incorrectSelections = 0;
+                        
+                        userAnswerArray.forEach(answer => {
+                            if (correctAnswerArray.includes(answer)) {
+                                correctSelections++;
+                            } else {
+                                incorrectSelections++;
+                            }
+                        });
+                        
+                        // Calculate partial score: (correct - incorrect) / total correct * full score
+                        const partialScore = Math.max(0, (correctSelections - incorrectSelections) / correctAnswerArray.length * question.score);
+                        totalScore += Math.round(partialScore);
+                    }
+                }
+            });
+            
+            const grade = Math.round((totalScore / maxPossibleScore) * 100);
+            
+            // Prepare response data in original order
+            const responseData = {
+                timestamp: new Date().toISOString(),
+                userId: currentUser.userId,
+                name: currentUser.name,
+                class: currentUser.class,
+                examId: currentExam.id,
+                examName: currentExam.name,
+                score: totalScore,
+                maxScore: maxPossibleScore,
+                grade: grade,
+                status: 'completed'
+            };
+            
+            // Add answers in original order (Q1-Q30)
+            for (let i = 1; i <= 30; i++) {
+                const originalQuestion = questions.find(q => q.id === i);
+                if (originalQuestion) {
+                    responseData[`Q${i}`] = userAnswers[originalQuestion.id] || '';
+                } else {
+                    responseData[`Q${i}`] = '';
+                }
+            }
+            
+            // Save to Google Sheets (demo - replace with actual API call)
+            await saveResponse(responseData);
+            
+            // Show results
+            showResults(responseData);
+        }
+
+        async function saveResponse(responseData) {
+            try {
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveResponse',
+                        responseData: responseData
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('Failed to save response:', result.message);
+                } else {
+                    console.log('Response saved successfully');
+                }
+            } catch (error) {
+                console.error('Save response API error:', error);
+            }
+        }
+
+        function showResults(responseData) {
+            document.getElementById('quizInterface').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            
+            // Display results
+            document.getElementById('finalScore').textContent = `${responseData.score}/${responseData.maxScore}`;
+            document.getElementById('finalGrade').textContent = responseData.grade;
+            document.getElementById('resultName').textContent = responseData.name;
+            document.getElementById('resultClass').textContent = responseData.class;
+            document.getElementById('resultExam').textContent = responseData.examName;
+            document.getElementById('resultTime').textContent = new Date().toLocaleString('id-ID');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Additional utility functions for future enhancements
+        async function testConnection() {
+            try {
+                const response = await fetch(CONFIG.WEB_APP_URL + '?action=test');
+                const result = await response.text();
+                console.log('Connection test:', result);
+                return true;
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                return false;
+            }
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d5f67f15cfef69',t:'MTc1NDg5Njc0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
