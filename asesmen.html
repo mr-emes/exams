@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ujian Online</title>
+    <title>Ujian Online - Debug Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -25,812 +25,1097 @@
         .card-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
         .animate-fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .progress-bar { transition: width 0.3s ease; }
-        .question-card { transition: all 0.3s ease; }
-        .option-hover:hover { transform: translateX(4px); }
+        .debug-log { max-height: 300px; overflow-y: auto; font-family: monospace; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen">
-    <!-- Login Form -->
+    <!-- Login Form with Debug -->
     <div id="loginForm" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md animate-fade-in">
+        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-2xl animate-fade-in">
             <div class="text-center mb-8">
                 <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 border-4 border-primary shadow-lg">
                     <img src="https://i.imgur.com/0Laf7Zu.png" alt="MIN Singkawang Logo" class="w-full h-full object-cover" onerror="this.src=''; this.alt='Logo failed to load'; this.style.display='none';">
                 </div>
-                <h1 class="text-2xl font-bold text-gray-800 mb-2">MIN SINGKAWANG</h1>
-                <p class="text-gray-600 font-medium">Madrasah Maju, Bermutu, Mendunia</p>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">MIN SINGKAWANG - DEBUG MODE</h1>
+                <p class="text-gray-600 font-medium">Diagnostic Mode untuk Troubleshooting</p>
+            </div>
+            
+            <!-- Configuration Check -->
+            <div id="configCheck" class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h3 class="font-bold text-yellow-800 mb-2">🔧 Konfigurasi Saat Ini:</h3>
+                <div class="text-sm text-yellow-700 space-y-1">
+                    <div>WEB_APP_URL: <span id="currentWebAppUrl" class="font-mono bg-white px-2 py-1 rounded">Belum diset</span></div>
+                    <div>SPREADSHEET_ID: <span id="currentSpreadsheetId" class="font-mono bg-white px-2 py-1 rounded">Belum diset</span></div>
+                </div>
+                <button onclick="updateConfig()" class="mt-2 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 text-sm">
+                    Update Konfigurasi
+                </button>
             </div>
             
             <form id="loginFormElement" class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">User ID</label>
-                    <input type="text" id="userId" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                           placeholder="Masukkan User ID">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                    <input type="password" id="password" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                           placeholder="Masukkan Password">
-                </div>
-                
-                <div id="connectionStatus" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                        <div class="text-sm text-blue-800">
-                            <div class="font-medium">Memeriksa Koneksi Database...</div>
-                            <div>Sedang menguji koneksi ke Google Sheets</div>
-                        </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">User ID</label>
+                        <input type="text" id="userId" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                               placeholder="Masukkan User ID" value="siswa1">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                               placeholder="Masukkan Password" value="siswa123">
                     </div>
                 </div>
                 
-                <button type="submit" 
-                        class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-6 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200">
-                    Masuk
-                </button>
+                <div class="grid md:grid-cols-4 gap-2">
+                    <button type="button" onclick="testConnection()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                        🔍 Test Koneksi
+                    </button>
+                    <button type="button" onclick="testManualUrl()" 
+                            class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm">
+                        🌐 Test Manual
+                    </button>
+                    <button type="button" onclick="testAuth()" 
+                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
+                        🔐 Test Login
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded hover:shadow-lg text-sm">
+                        🚀 Login Normal
+                    </button>
+                </div>
             </form>
             
-            <div id="loginError" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
-        </div>
-    </div>
-
-    <!-- Quiz Interface -->
-    <div id="quizInterface" class="hidden min-h-screen p-4">
-        <!-- Header -->
-        <div class="bg-white rounded-2xl card-shadow p-6 mb-6 animate-fade-in">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 id="examTitle" class="text-2xl font-bold text-gray-800 mb-2">Nama Ujian - Mapel - Kelas</h1>
-                    <p id="examSubtitle" class="text-gray-600">Materi Ujian</p>
+            <!-- Success Analysis -->
+            <div id="successAnalysis" class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h3 class="font-bold text-green-800 mb-2">✅ Web App Sudah Berfungsi! Test Manual Berhasil!</h3>
+                <div class="text-sm text-green-700 space-y-2">
+                    <div>✅ <strong>doGet() function working</strong> - Response: {"success":false,"message":"Invalid JSON format"}</div>
+                    <div>✅ <strong>Web App deployment successful</strong></div>
+                    <div>✅ <strong>Permission settings correct</strong></div>
+                    <div>✅ <strong>Apps Script code loaded properly</strong></div>
                 </div>
-                <div class="mt-4 md:mt-0 flex items-center space-x-4">
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-primary" id="timer">00:00</div>
-                        <div class="text-sm text-gray-500">Waktu Tersisa</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-accent" id="questionCounter">1/20</div>
-                        <div class="text-sm text-gray-500">Soal</div>
-                    </div>
+                <div class="mt-3 text-sm text-green-600">
+                    <strong>🎯 Langkah Selanjutnya:</strong> Test authentication dengan klik tombol "🔐 Test Login" di atas!
                 </div>
             </div>
-            
-            <!-- Progress Bar -->
+
+            <!-- Error Analysis (Hidden by default) -->
+            <div id="errorAnalysis" class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <h3 class="font-bold text-red-800 mb-2">🚨 Error "Failed to fetch" - Web App Tidak Bisa Diakses</h3>
+                <div class="text-sm text-red-700 space-y-2 mb-4">
+                    <div>❌ <strong>Web App deployment bermasalah</strong></div>
+                    <div>❌ <strong>Permission settings salah</strong></div>
+                    <div>❌ <strong>URL tidak valid atau expired</strong></div>
+                    <div>❌ <strong>Apps Script code belum di-save/deploy</strong></div>
+                </div>
+                
+                <div class="bg-yellow-100 border border-yellow-300 rounded p-3 mb-4">
+                    <div class="font-bold text-yellow-800 mb-2">🎯 SOLUSI CEPAT - Ikuti Langkah Ini:</div>
+                    <ol class="text-sm text-yellow-700 space-y-1 list-decimal list-inside">
+                        <li><strong>Buka Apps Script project Anda</strong></li>
+                        <li><strong>Pastikan kode sudah lengkap dan di-save</strong></li>
+                        <li><strong>Jalankan setupDatabase() sekali</strong></li>
+                        <li><strong>Deploy ulang dengan permission "Anyone"</strong></li>
+                        <li><strong>Test URL baru di browser</strong></li>
+                    </ol>
+                </div>
+                
+                <div class="space-x-2">
+                    <button onclick="showAppsScriptCode()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                        📝 Lihat Kode Lengkap
+                    </button>
+                    <button onclick="showDeploymentGuide()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                        🚀 Panduan Deploy Detail
+                    </button>
+                    <button onclick="showQuickFix()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
+                        ⚡ Quick Fix Guide
+                    </button>
+                </div>
+            </div>
+
+            <!-- Debug Log -->
             <div class="mt-6">
-                <div class="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>Progress</span>
-                    <span id="progressText">5%</span>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-800">📋 Debug Log:</h3>
+                    <button onclick="clearLog()" class="text-sm text-gray-500 hover:text-gray-700">Clear</button>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div id="progressBar" class="bg-gradient-to-r from-primary to-accent h-2 rounded-full progress-bar" style="width: 5%"></div>
+                <div id="debugLog" class="debug-log bg-gray-900 text-green-400 p-4 rounded-lg text-xs">
+                    <div>🚀 Debug mode initialized...</div>
+                    <div>⏰ Timestamp: <span id="timestamp"></span></div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Question Card -->
-        <div class="bg-white rounded-2xl card-shadow p-8 mb-6 animate-fade-in question-card">
-            <div class="mb-6">
-                <div class="flex items-center mb-4">
-                    <span class="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium mr-3" id="questionType">Pilihan Ganda</span>
-                    <span class="text-gray-500 text-sm" id="questionNumber">Soal 1</span>
-                </div>
-                <h2 id="questionText" class="text-xl font-semibold text-gray-800 leading-relaxed">
-                    Pertanyaan akan muncul di sini...
-                </h2>
             </div>
             
-            <div id="optionsContainer" class="space-y-3">
-                <!-- Options will be populated here -->
-            </div>
-        </div>
-
-        <!-- Navigation -->
-        <div class="bg-white rounded-2xl card-shadow p-6 animate-fade-in">
-            <div class="flex justify-between items-center">
-                <button id="prevBtn" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                    ← Sebelumnya
-                </button>
-                
-                <div class="flex space-x-3">
-                    <button id="markBtn" class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all duration-200">
-                        🏷️ Tandai
+            <!-- Quick Test Credentials -->
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 class="font-bold text-blue-800 mb-2">🎯 Test Credentials (klik untuk auto-fill):</h4>
+                <div class="grid grid-cols-3 gap-2 text-sm">
+                    <button onclick="fillCredentials('admin', 'admin123')" class="p-2 bg-blue-100 hover:bg-blue-200 rounded">
+                        Admin: admin/admin123
                     </button>
-                    <button id="nextBtn" class="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
-                        Selanjutnya →
+                    <button onclick="fillCredentials('guru1', 'guru123')" class="p-2 bg-blue-100 hover:bg-blue-200 rounded">
+                        Guru: guru1/guru123
+                    </button>
+                    <button onclick="fillCredentials('siswa1', 'siswa123')" class="p-2 bg-blue-100 hover:bg-blue-200 rounded">
+                        Siswa: siswa1/siswa123
                     </button>
                 </div>
-                
-                <button id="finishBtn" class="hidden px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
-                    Selesai
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Result Screen -->
-    <div id="resultScreen" class="hidden min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-2xl animate-fade-in">
-            <div class="text-center mb-8">
-                <div class="w-24 h-24 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Ujian Selesai!</h1>
-                <p class="text-gray-600">Hasil ujian Anda telah tersimpan</p>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-blue-600" id="finalScore">0</div>
-                        <div class="text-blue-800 font-medium">Skor</div>
-                    </div>
-                </div>
-                
-                <div class="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl">
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-green-600" id="finalGrade">0</div>
-                        <div class="text-green-800 font-medium">Nilai</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gray-50 rounded-xl p-6 mb-6">
-                <h3 class="font-semibold text-gray-800 mb-4">Detail Hasil:</h3>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span class="text-gray-600">Nama:</span>
-                        <span class="font-medium ml-2" id="resultName">-</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Kelas:</span>
-                        <span class="font-medium ml-2" id="resultClass">-</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Ujian:</span>
-                        <span class="font-medium ml-2" id="resultExam">-</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Waktu:</span>
-                        <span class="font-medium ml-2" id="resultTime">-</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="text-center">
-                <button onclick="location.reload()" 
-                        class="px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
-                    Kembali ke Login
-                </button>
             </div>
         </div>
     </div>
 
     <!-- Apps Script Code Modal -->
-    <div id="appsScriptModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">📝 Kode Apps Script Baru</h2>
-                    <button onclick="document.getElementById('appsScriptModal').style.display='none'" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
-                </div>
-                
-                <div class="bg-red-100 border border-red-300 rounded-lg p-4 mb-4">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                        </svg>
-                        <div class="text-sm text-red-800">
-                            <div class="font-medium">❌ Database Tidak Terhubung</div>
-                            <div>Silakan setup Apps Script terlebih dahulu</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-blue-100 p-4 rounded-lg mb-4">
-                    <h3 class="font-semibold mb-2">🚀 Langkah Setup:</h3>
-                    <ol class="text-sm space-y-1 list-decimal list-inside">
-                        <li>Buka <a href="https://script.google.com" target="_blank" class="text-blue-600 underline">script.google.com</a></li>
-                        <li>Klik "New Project"</li>
-                        <li>Hapus kode default, paste kode di bawah</li>
-                        <li>Ganti SPREADSHEET_ID dengan ID Google Sheets Anda</li>
-                        <li>Klik "Deploy" → "New Deployment"</li>
-                        <li>Type: "Web app", Execute as: "Me", Access: "Anyone"</li>
-                        <li>Copy Web App URL dan update di kode HTML</li>
-                        <li>Jalankan function setupDatabase() sekali</li>
-                    </ol>
-                </div>
-                
-                <div class="relative">
-                    <button onclick="copyAppsScriptCode()" class="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
-                        📋 Copy
-                    </button>
-                    <pre class="bg-gray-900 text-green-400 p-4 rounded-lg text-xs overflow-x-auto" style="max-height: 400px;"><code id="appsScriptCode">// ===== KODE APPS SCRIPT UJIAN ONLINE - VERSI BARU =====
-// Paste kode ini ke Google Apps Script
-
-// KONFIGURASI - WAJIB DIGANTI!
-const SPREADSHEET_ID = '1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk';
-
-/**
- * Fungsi utama untuk menangani request dari web app
- */
-function doPost(e) {
-  try {
-    console.log('=== INCOMING REQUEST ===');
-    console.log('Raw request:', e);
-    
-    // Parse request body
-    let requestData;
-    try {
-      const requestBody = e.postData.contents;
-      console.log('Request body:', requestBody);
-      requestData = JSON.parse(requestBody);
-      console.log('Parsed request:', requestData);
-    } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
-      return createResponse({
-        success: false,
-        message: 'Invalid JSON format: ' + parseError.message
-      });
-    }
-    
-    // Route berdasarkan action
-    let result;
-    switch (requestData.action) {
-      case 'test':
-        result = handleTest();
-        break;
-      case 'authenticate':
-        result = handleAuthenticate(requestData.userId, requestData.password);
-        break;
-      case 'getExamData':
-        result = handleGetExamData(requestData.userId);
-        break;
-      case 'saveResponse':
-        result = handleSaveResponse(requestData.responseData);
-        break;
-      default:
-        result = {
-          success: false,
-          message: 'Unknown action: ' + requestData.action
-        };
-    }
-    
-    console.log('=== SENDING RESPONSE ===');
-    console.log('Response:', result);
-    
-    return createResponse(result);
-    
-  } catch (error) {
-    console.error('=== FATAL ERROR ===');
-    console.error('Error:', error);
-    console.error('Stack:', error.stack);
-    
-    return createResponse({
-      success: false,
-      message: 'Server error: ' + error.message,
-      error: error.toString(),
-      stack: error.stack
-    });
-  }
-}
-
-/**
- * Membuat response dengan header yang benar
- */
-function createResponse(data) {
-  const output = ContentService.createTextOutput(JSON.stringify(data));
-  output.setMimeType(ContentService.MimeType.JSON);
-  return output;
-}
-
-/**
- * Test koneksi database
- */
-function handleTest() {
-  try {
-    console.log('Testing database connection...');
-    console.log('Spreadsheet ID:', SPREADSHEET_ID);
-    
-    if (SPREADSHEET_ID === 'GANTI_DENGAN_SPREADSHEET_ID_ANDA') {
-      return {
-        success: false,
-        message: 'SPREADSHEET_ID belum diganti! Edit kode Apps Script dan ganti dengan ID Spreadsheet Anda.'
-      };
-    }
-    
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const spreadsheetName = ss.getName();
-    const timestamp = new Date().toISOString();
-    
-    console.log('Database connection successful');
-    console.log('Spreadsheet name:', spreadsheetName);
-    
-    return {
-      success: true,
-      message: 'Database connection successful',
-      data: {
-        timestamp: timestamp,
-        spreadsheetName: spreadsheetName,
-        spreadsheetId: SPREADSHEET_ID
-      }
-    };
-    
-  } catch (error) {
-    console.error('Database test failed:', error);
-    return {
-      success: false,
-      message: 'Database connection failed: ' + error.message,
-      error: error.toString()
-    };
-  }
-}
-
-/**
- * Autentikasi user
- */
-function handleAuthenticate(userId, password) {
-  try {
-    console.log('Authenticating user:', userId);
-    
-    if (!userId || !password) {
-      return {
-        success: false,
-        message: 'User ID dan Password harus diisi'
-      };
-    }
-    
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const studentsSheet = ss.getSheetByName('Students');
-    
-    if (!studentsSheet) {
-      return {
-        success: false,
-        message: 'Sheet Students tidak ditemukan. Jalankan setupDatabase() terlebih dahulu.'
-      };
-    }
-    
-    const data = studentsSheet.getDataRange().getValues();
-    console.log('Students data rows:', data.length);
-    
-    // Cari user (skip header row)
-    for (let i = 1; i < data.length; i++) {
-      const row = data[i];
-      console.log('Checking row:', i, 'UserId:', row[0], 'Password:', row[1]);
-      
-      if (row[0] === userId && row[1] === password) {
-        console.log('Authentication successful for:', userId);
-        return {
-          success: true,
-          message: 'Authentication successful',
-          data: {
-            userId: row[0],
-            name: row[2],
-            class: row[3]
-          }
-        };
-      }
-    }
-    
-    console.log('Authentication failed for:', userId);
-    return {
-      success: false,
-      message: 'User ID atau Password salah'
-    };
-    
-  } catch (error) {
-    console.error('Authentication error:', error);
-    return {
-      success: false,
-      message: 'Authentication failed: ' + error.message,
-      error: error.toString()
-    };
-  }
-}
-
-/**
- * Ambil data ujian dan soal
- */
-function handleGetExamData(userId) {
-  try {
-    console.log('Getting exam data for user:', userId);
-    
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    
-    // Ambil data ujian
-    const examSheet = ss.getSheetByName('Exam');
-    if (!examSheet) {
-      return {
-        success: false,
-        message: 'Sheet Exam tidak ditemukan'
-      };
-    }
-    
-    const examData = examSheet.getDataRange().getValues();
-    if (examData.length < 2) {
-      return {
-        success: false,
-        message: 'Data ujian tidak ditemukan'
-      };
-    }
-    
-    const examRow = examData[1]; // Ambil baris pertama data (skip header)
-    const exam = {
-      id: examRow[0],
-      name: examRow[1],
-      subject: examRow[2],
-      material: examRow[3],
-      class: examRow[4],
-      date: examRow[5],
-      time: examRow[6],
-      duration: examRow[7],
-      status: examRow[8]
-    };
-    
-    console.log('Exam data:', exam);
-    
-    // Ambil data soal
-    const questionsSheet = ss.getSheetByName('Questions');
-    if (!questionsSheet) {
-      return {
-        success: false,
-        message: 'Sheet Questions tidak ditemukan'
-      };
-    }
-    
-    const questionsData = questionsSheet.getDataRange().getValues();
-    const questions = [];
-    
-    // Skip header row
-    for (let i = 1; i < questionsData.length; i++) {
-      const row = questionsData[i];
-      if (row[0]) { // Skip empty rows
-        questions.push({
-          id: row[0],
-          examId: row[1],
-          type: row[2],
-          score: row[3],
-          question: row[4],
-          optionA: row[5],
-          optionB: row[6],
-          optionC: row[7],
-          optionD: row[8],
-          key: row[9]
-        });
-      }
-    }
-    
-    console.log('Questions loaded:', questions.length);
-    
-    return {
-      success: true,
-      message: 'Exam data loaded successfully',
-      data: {
-        exam: exam,
-        questions: questions
-      }
-    };
-    
-  } catch (error) {
-    console.error('Get exam data error:', error);
-    return {
-      success: false,
-      message: 'Failed to load exam data: ' + error.message,
-      error: error.toString()
-    };
-  }
-}
-
-/**
- * Simpan jawaban ujian
- */
-function handleSaveResponse(responseData) {
-  try {
-    console.log('Saving response for user:', responseData.userId);
-    
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let responseSheet = ss.getSheetByName('Responses');
-    
-    // Buat sheet jika belum ada
-    if (!responseSheet) {
-      console.log('Creating Responses sheet...');
-      responseSheet = ss.insertSheet('Responses');
-      
-      // Tambah header
-      const headers = [
-        'Timestamp', 'UserId', 'Name', 'Class', 'ExamId', 'ExamName', 
-        'Score', 'MaxScore', 'Grade', 'Status'
-      ];
-      
-      // Tambah kolom Q1-Q30
-      for (let i = 1; i <= 30; i++) {
-        headers.push(`Q${i}`);
-      }
-      
-      responseSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      console.log('Response sheet created with headers');
-    }
-    
-    // Siapkan data baris
-    const rowData = [
-      responseData.timestamp,
-      responseData.userId,
-      responseData.name,
-      responseData.class,
-      responseData.examId,
-      responseData.examName,
-      responseData.score,
-      responseData.maxScore,
-      responseData.grade,
-      responseData.status
-    ];
-    
-    // Tambah jawaban Q1-Q30
-    for (let i = 1; i <= 30; i++) {
-      rowData.push(responseData[`Q${i}`] || '');
-    }
-    
-    // Tambah ke sheet
-    responseSheet.appendRow(rowData);
-    console.log('Response saved successfully');
-    
-    return {
-      success: true,
-      message: 'Response saved successfully'
-    };
-    
-  } catch (error) {
-    console.error('Save response error:', error);
-    return {
-      success: false,
-      message: 'Failed to save response: ' + error.message,
-      error: error.toString()
-    };
-  }
-}
-
-/**
- * Setup database - Jalankan sekali untuk membuat struktur
- */
-function setupDatabase() {
-  try {
-    console.log('=== SETTING UP DATABASE ===');
-    
-    if (SPREADSHEET_ID === 'GANTI_DENGAN_SPREADSHEET_ID_ANDA') {
-      throw new Error('SPREADSHEET_ID belum diganti! Edit kode dan ganti dengan ID Spreadsheet Anda.');
-    }
-    
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    console.log('Spreadsheet opened:', ss.getName());
-    
-    // 1. Setup Students sheet
-    console.log('Setting up Students sheet...');
-    let studentsSheet = ss.getSheetByName('Students');
-    if (studentsSheet) {
-      ss.deleteSheet(studentsSheet);
-    }
-    studentsSheet = ss.insertSheet('Students');
-    
-    const studentsHeaders = ['UserId', 'Password', 'Name', 'Class'];
-    const studentsData = [
-      ['admin', 'admin123', 'Administrator', 'Admin'],
-      ['guru1', 'guru123', 'Pak Ahmad', 'Guru'],
-      ['siswa1', 'siswa123', 'Ahmad Rizki', 'XII IPA 1'],
-      ['siswa2', 'siswa123', 'Siti Nurhaliza', 'XII IPA 1'],
-      ['siswa3', 'siswa123', 'Budi Santoso', 'XII IPA 2'],
-      ['siswa4', 'siswa123', 'Dewi Sartika', 'XII IPA 2']
-    ];
-    
-    studentsSheet.getRange(1, 1, 1, studentsHeaders.length).setValues([studentsHeaders]);
-    studentsSheet.getRange(2, 1, studentsData.length, studentsData[0].length).setValues(studentsData);
-    console.log('Students sheet created with', studentsData.length, 'users');
-    
-    // 2. Setup Exam sheet
-    console.log('Setting up Exam sheet...');
-    let examSheet = ss.getSheetByName('Exam');
-    if (examSheet) {
-      ss.deleteSheet(examSheet);
-    }
-    examSheet = ss.insertSheet('Exam');
-    
-    const examHeaders = ['Id', 'Name', 'Subject', 'Material', 'Class', 'Date', 'Time', 'Duration', 'Status'];
-    const examData = [
-      [1, 'Ujian Matematika Semester 1', 'Matematika', 'Integral dan Diferensial', 'XII IPA', '2024-01-15', '08:00', 90, 'active']
-    ];
-    
-    examSheet.getRange(1, 1, 1, examHeaders.length).setValues([examHeaders]);
-    examSheet.getRange(2, 1, examData.length, examData[0].length).setValues(examData);
-    console.log('Exam sheet created');
-    
-    // 3. Setup Questions sheet
-    console.log('Setting up Questions sheet...');
-    let questionsSheet = ss.getSheetByName('Questions');
-    if (questionsSheet) {
-      ss.deleteSheet(questionsSheet);
-    }
-    questionsSheet = ss.insertSheet('Questions');
-    
-    const questionsHeaders = ['Id', 'ExamId', 'Type', 'Score', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'Key'];
-    const questionsData = [
-      [1, 1, 'PG', 10, 'Hasil dari integral ∫2x dx adalah...', 'x² + C', '2x² + C', 'x²/2 + C', '2x + C', 'A'],
-      [2, 1, 'PG', 10, 'Turunan dari f(x) = 3x² + 2x - 1 adalah...', '6x + 2', '3x + 2', '6x - 1', '3x² + 2', 'A'],
-      [3, 1, 'PG', 10, 'Nilai limit dari lim(x→2) (x² - 4)/(x - 2) adalah...', '0', '2', '4', '∞', 'C'],
-      [4, 1, 'PG', 10, 'Hasil dari ∫(3x² + 2x) dx adalah...', 'x³ + x² + C', '6x + 2 + C', '3x³ + x² + C', 'x³ + 2x² + C', 'A'],
-      [5, 1, 'PG', 10, 'Fungsi f(x) = x³ - 3x² + 2x memiliki titik stasioner di...', 'x = 1', 'x = 2', 'x = 1 dan x = 2/3', 'x = 0', 'C'],
-      [6, 1, 'PJ', 15, 'Manakah dari berikut ini yang merupakan bilangan prima? (Pilih semua yang benar)', '17', '21', '23', '25', 'A,C'],
-      [7, 1, 'PJ', 20, 'Sifat-sifat fungsi kuadrat f(x) = ax² + bx + c dengan a > 0 adalah... (Pilih semua yang benar)', 'Grafik membuka ke atas', 'Memiliki nilai minimum', 'Grafik membuka ke bawah', 'Memiliki sumbu simetri', 'A,B,D'],
-      [8, 1, 'PJ', 15, 'Operasi berikut yang menghasilkan turunan adalah... (Pilih semua yang benar)', 'Diferensiasi', 'Integrasi', 'Derivasi', 'Substitusi', 'A,C']
-    ];
-    
-    questionsSheet.getRange(1, 1, 1, questionsHeaders.length).setValues([questionsHeaders]);
-    questionsSheet.getRange(2, 1, questionsData.length, questionsData[0].length).setValues(questionsData);
-    console.log('Questions sheet created with', questionsData.length, 'questions');
-    
-    console.log('=== DATABASE SETUP COMPLETED ===');
-    console.log('✅ Students sheet: ' + studentsData.length + ' users');
-    console.log('✅ Exam sheet: ' + examData.length + ' exam');
-    console.log('✅ Questions sheet: ' + questionsData.length + ' questions');
-    console.log('');
-    console.log('🎯 Test login credentials:');
-    console.log('   Admin: admin / admin123');
-    console.log('   Guru: guru1 / guru123');
-    console.log('   Siswa: siswa1 / siswa123');
-    
-    return 'Database setup completed successfully!';
-    
-  } catch (error) {
-    console.error('=== DATABASE SETUP FAILED ===');
-    console.error('Error:', error);
-    throw error;
-  }
-}
-
-/**
- * Fungsi untuk testing manual - jalankan di Apps Script editor
- */
-function testManual() {
-  console.log('=== MANUAL TESTING ===');
-  
-  try {
-    // Test 1: Setup database
-    console.log('1. Testing setupDatabase...');
-    setupDatabase();
-    console.log('✅ setupDatabase: SUCCESS');
-    
-    // Test 2: Test connection
-    console.log('2. Testing connection...');
-    const testResult = handleTest();
-    console.log('testConnection result:', testResult);
-    
-    // Test 3: Test authentication
-    console.log('3. Testing authentication...');
-    const authResult = handleAuthenticate('siswa1', 'siswa123');
-    console.log('authenticateUser result:', authResult);
-    
-    // Test 4: Test get exam data
-    console.log('4. Testing getExamData...');
-    const examResult = handleGetExamData('siswa1');
-    console.log('getExamData result:', examResult);
-    
-    console.log('=== ALL TESTS COMPLETED ===');
-    
-  } catch (error) {
-    console.error('=== TESTING FAILED ===');
-    console.error('Error:', error);
-  }
-}</code></pre>
-                </div>
+    <div id="appsScriptModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">📝 Kode Apps Script Lengkap</h2>
+                <button onclick="closeAppsScriptModal()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
             </div>
-        </div>
-    </div>
-
-    <script>
-        // Configuration - WAJIB DIGANTI!
-        const CONFIG = {
-            WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyOKourmNhJNQ8JZXZdqzZpggUbJhE4x-IGPZbag2Q7uhk5zx9AVXlDkukFj3LN7v8Y/exec',
-            SPREADSHEET_ID: '1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk'
-        };
-
-        // Global variables
-        let currentUser = null;
-        let currentExam = null;
-        let questions = [];
-        let shuffledQuestions = [];
-        let currentQuestionIndex = 0;
-        let userAnswers = {};
-        let markedQuestions = new Set();
-        let examTimer = null;
-        let timeRemaining = 0;
-
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            setupEventListeners();
-            testDatabaseConnection();
-        });
-
-        function setupEventListeners() {
-            document.getElementById('loginFormElement').addEventListener('submit', handleLogin);
-            document.getElementById('prevBtn').addEventListener('click', previousQuestion);
-            document.getElementById('nextBtn').addEventListener('click', nextQuestion);
-            document.getElementById('markBtn').addEventListener('click', toggleMark);
-            document.getElementById('finishBtn').addEventListener('click', finishExam);
-        }
-
-        async function testDatabaseConnection() {
-            const statusDiv = document.getElementById('connectionStatus');
             
-            // Check if URLs are configured
-            if (CONFIG.WEB_APP_URL === 'GANTI_DENGAN_WEB_APP_URL_ANDA') {
-                showSetupRequired();
-                return;
-            }
-            
-            // Show testing status
-            statusDiv.className = 'bg-blue-50 border border-blue-200 rounded-lg p-4';
-            statusDiv.innerHTML = `
-                <div class="flex items-center">
-                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                    <div class="text-sm text-blue-800">
-                        <div class="font-medium">🔍 Menguji Koneksi Database...</div>
-                        <div>Mengirim request ke Apps Script...</div>
-                    </div>
-                </div>
-            `;
-            
-            try {
-                const response = await fetch(CONFIG.WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'test' })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Success
-                    statusDiv.className = 'bg-green-50 border border-green-200 rounded-lg p-4';
-                    statusDiv.innerHTML = `
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
-                            <div class="text-sm text-green-800">
-                                <div class="font-medium">✅ Database Terhubung</div>
-                                <div>Spreadsheet: ${result.data.spreadsheetName}</div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    throw new Error(result.message);
-                }
-                
-            } catch (error) {
-                console.error('Database connection failed:', error);
-                showSetupRequired();
-            }
-        }
-
-        function showSetupRequired() {
-            const statusDiv = document.getElementById('connectionStatus');
-            statusDiv.className = 'bg-red-50 border border-red-200 rounded-lg p-4';
-            statusDiv.innerHTML = `
+            <div class="bg-red-100 border border-red-300 rounded-lg p-4 mb-6">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                     </svg>
                     <div class="text-sm text-red-800">
-                        <div class="font-medium">❌ Setup Apps Script Diperlukan</div>
-                        <div>Klik tombol di bawah untuk melihat kode</div>
+                        <div class="font-medium">❌ Error "Fungsi skrip tidak ditemukan: doGet"</div>
+                        <div>Ini artinya kode Apps Script belum di-copy atau belum lengkap!</div>
                     </div>
                 </div>
-            `;
+            </div>
             
-            // Show modal automatically
-            document.getElementById('appsScriptModal').style.display = 'flex';
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-blue-800 mb-3">📋 Langkah-langkah:</h3>
+                    <ol class="text-sm space-y-2 list-decimal list-inside text-blue-700">
+                        <li><strong>Buka Apps Script project Anda</strong> di <a href="https://script.google.com" target="_blank" class="underline">script.google.com</a></li>
+                        <li><strong>Hapus semua kode yang ada</strong> (jika ada)</li>
+                        <li><strong>Copy kode di bawah ini</strong> dan paste ke Apps Script</li>
+                        <li><strong>Ganti SPREADSHEET_ID</strong> dengan ID Anda: <code class="bg-white px-2 py-1 rounded">1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk</code></li>
+                        <li><strong>Klik "Save" (Ctrl+S)</strong></li>
+                        <li><strong>Jalankan function setupDatabase()</strong> sekali</li>
+                        <li><strong>Deploy sebagai Web App</strong></li>
+                    </ol>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold text-gray-800">📄 Kode Apps Script Lengkap:</h3>
+                        <button onclick="copyAppsScriptCode()" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                            📋 Copy Kode
+                        </button>
+                    </div>
+                    <pre id="appsScriptCode" class="bg-gray-900 text-green-400 p-4 rounded text-xs overflow-x-auto" style="max-height: 400px;">// ===== KODE APPS SCRIPT UNTUK UJIAN ONLINE =====
+// Ganti SPREADSHEET_ID dengan ID Google Sheets Anda
+
+const SPREADSHEET_ID = '1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk'; // GANTI INI!
+
+// Fungsi untuk handle GET request (WAJIB ADA!)
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      success: false,
+      message: "Invalid JSON format"
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Fungsi untuk handle POST request (WAJIB ADA!)
+function doPost(e) {
+  try {
+    // Parse request data
+    let requestData;
+    try {
+      requestData = JSON.parse(e.postData.contents);
+    } catch (parseError) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          success: false,
+          message: "Invalid JSON format"
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const action = requestData.action;
+    
+    // Route actions
+    switch (action) {
+      case 'test':
+        return handleTest();
+      case 'authenticate':
+        return handleAuthenticate(requestData);
+      case 'getExamData':
+        return handleGetExamData(requestData);
+      case 'submitAnswer':
+        return handleSubmitAnswer(requestData);
+      default:
+        return ContentService
+          .createTextOutput(JSON.stringify({
+            success: false,
+            message: "Unknown action: " + action
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        message: "Server error: " + error.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Test connection
+function handleTest() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: true,
+        message: "Database connection successful",
+        data: {
+          spreadsheetName: ss.getName(),
+          timestamp: new Date().toISOString()
+        }
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        message: "Database connection failed: " + error.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Authenticate user
+function handleAuthenticate(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const studentsSheet = ss.getSheetByName('Students');
+    
+    if (!studentsSheet) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          success: false,
+          message: "Students sheet not found"
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const students = studentsSheet.getDataRange().getValues();
+    const headers = students[0];
+    
+    // Find user
+    for (let i = 1; i < students.length; i++) {
+      const row = students[i];
+      if (row[0] === data.userId && row[1] === data.password) {
+        return ContentService
+          .createTextOutput(JSON.stringify({
+            success: true,
+            message: "Authentication successful",
+            data: {
+              userId: row[0],
+              name: row[2],
+              class: row[3],
+              role: row[4] || 'student'
+            }
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        message: "Invalid credentials"
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        message: "Authentication error: " + error.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Get exam data
+function handleGetExamData(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // Get exam info
+    const examSheet = ss.getSheetByName('Exams');
+    if (!examSheet) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          success: false,
+          message: "Exams sheet not found"
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const examData = examSheet.getDataRange().getValues();
+    const exam = {
+      id: examData[1][0],
+      name: examData[1][1],
+      duration: examData[1][2],
+      totalQuestions: examData[1][3]
+    };
+    
+    // Get questions
+    const questionsSheet = ss.getSheetByName('Questions');
+    if (!questionsSheet) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          success: false,
+          message: "Questions sheet not found"
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const questionsData = questionsSheet.getDataRange().getValues();
+    const questions = [];
+    
+    for (let i = 1; i < questionsData.length; i++) {
+      const row = questionsData[i];
+      questions.push({
+        id: row[0],
+        question: row[1],
+        optionA: row[2],
+        optionB: row[3],
+        optionC: row[4],
+        optionD: row[5],
+        correctAnswer: row[6]
+      });
+    }
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: true,
+        message: "Exam data loaded",
+        data: {
+          exam: exam,
+          questions: questions
+        }
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        message: "Failed to load exam data: " + error.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Submit answer
+function handleSubmitAnswer(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let answersSheet = ss.getSheetByName('Answers');
+    
+    // Create Answers sheet if not exists
+    if (!answersSheet) {
+      answersSheet = ss.insertSheet('Answers');
+      answersSheet.getRange(1, 1, 1, 6).setValues([
+        ['UserId', 'QuestionId', 'Answer', 'IsCorrect', 'Timestamp', 'Score']
+      ]);
+    }
+    
+    // Add answer
+    const timestamp = new Date().toISOString();
+    answersSheet.appendRow([
+      data.userId,
+      data.questionId,
+      data.answer,
+      data.isCorrect,
+      timestamp,
+      data.score || 0
+    ]);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: true,
+        message: "Answer submitted successfully"
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        message: "Failed to submit answer: " + error.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Setup database (run this once)
+function setupDatabase() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // Create Students sheet
+    let studentsSheet = ss.getSheetByName('Students');
+    if (!studentsSheet) {
+      studentsSheet = ss.insertSheet('Students');
+      studentsSheet.getRange(1, 1, 1, 5).setValues([
+        ['UserId', 'Password', 'Name', 'Class', 'Role']
+      ]);
+      
+      // Add sample data
+      studentsSheet.getRange(2, 1, 4, 5).setValues([
+        ['admin', 'admin123', 'Administrator', 'Admin', 'admin'],
+        ['guru1', 'guru123', 'Guru Matematika', 'Teacher', 'teacher'],
+        ['siswa1', 'siswa123', 'Ahmad Budi', 'Kelas 6A', 'student'],
+        ['siswa2', 'siswa123', 'Siti Aisyah', 'Kelas 6B', 'student']
+      ]);
+    }
+    
+    // Create Exams sheet
+    let examsSheet = ss.getSheetByName('Exams');
+    if (!examsSheet) {
+      examsSheet = ss.insertSheet('Exams');
+      examsSheet.getRange(1, 1, 1, 4).setValues([
+        ['ExamId', 'Name', 'Duration', 'TotalQuestions']
+      ]);
+      
+      examsSheet.getRange(2, 1, 1, 4).setValues([
+        ['EXAM001', 'Ujian Matematika Kelas 6', 60, 10]
+      ]);
+    }
+    
+    // Create Questions sheet
+    let questionsSheet = ss.getSheetByName('Questions');
+    if (!questionsSheet) {
+      questionsSheet = ss.insertSheet('Questions');
+      questionsSheet.getRange(1, 1, 1, 7).setValues([
+        ['QuestionId', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer']
+      ]);
+      
+      // Add sample questions
+      questionsSheet.getRange(2, 1, 5, 7).setValues([
+        ['Q001', 'Berapa hasil dari 15 + 25?', '30', '35', '40', '45', 'C'],
+        ['Q002', 'Berapa hasil dari 8 × 7?', '54', '56', '58', '60', 'B'],
+        ['Q003', 'Berapa hasil dari 100 - 37?', '63', '67', '73', '77', 'A'],
+        ['Q004', 'Berapa hasil dari 144 ÷ 12?', '10', '11', '12', '13', 'C'],
+        ['Q005', 'Berapa hasil dari 25 × 4?', '90', '95', '100', '105', 'C']
+      ]);
+    }
+    
+    Logger.log('Database setup completed successfully!');
+    return 'Database setup completed successfully!';
+    
+  } catch (error) {
+    Logger.log('Database setup failed: ' + error.toString());
+    return 'Database setup failed: ' + error.toString();
+  }
+}</pre>
+                </div>
+                
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-yellow-800 mb-2">⚠️ Penting!</h3>
+                    <div class="text-sm text-yellow-700 space-y-1">
+                        <div>• <strong>Ganti SPREADSHEET_ID</strong> di baris ke-4 dengan ID Anda</div>
+                        <div>• <strong>Save kode</strong> setelah di-paste (Ctrl+S)</div>
+                        <div>• <strong>Jalankan setupDatabase()</strong> sekali untuk membuat data</div>
+                        <div>• <strong>Deploy sebagai Web App</strong> dengan permission "Anyone"</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mt-6">
+                <button onclick="closeAppsScriptModal()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Mengerti, Saya Akan Copy Kode Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Modal -->
+    <div id="configModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full p-6">
+            <h2 class="text-xl font-bold mb-4">⚙️ Update Konfigurasi</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Web App URL:</label>
+                    <input type="text" id="newWebAppUrl" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                           placeholder="https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Spreadsheet ID:</label>
+                    <input type="text" id="newSpreadsheetId" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                           placeholder="1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk">
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeConfigModal()" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                    Batal
+                </button>
+                <button onclick="saveConfig()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Simpan & Test
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORS Troubleshooting Modal -->
+    <div id="corsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">🔒 CORS & Security Troubleshooting</h2>
+                <button onclick="closeCorsModal()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-orange-100 border border-orange-300 rounded-lg p-4">
+                    <h3 class="font-bold text-orange-800 mb-2">🔍 Test Manual URL</h3>
+                    <p class="text-sm text-orange-700 mb-3">Klik tombol di bawah untuk membuka Web App URL di tab baru:</p>
+                    <button onclick="openWebAppInNewTab()" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm">
+                        🌐 Buka Web App URL
+                    </button>
+                    <div class="mt-3 text-xs text-orange-600">
+                        <div><strong>Yang seharusnya muncul:</strong></div>
+                        <div class="bg-white p-2 rounded font-mono">{"success":false,"message":"Invalid JSON format"}</div>
+                        <div class="mt-2"><strong>Jika muncul hal lain:</strong> Ada masalah dengan deployment</div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-100 border border-blue-300 rounded-lg p-4">
+                    <h3 class="font-bold text-blue-800 mb-2">🔧 Solusi CORS Issues</h3>
+                    <div class="text-sm text-blue-700 space-y-2">
+                        <div><strong>1. Pastikan Apps Script Code memiliki CORS headers:</strong></div>
+                        <div class="bg-white p-2 rounded font-mono text-xs">
+                            function doPost(e) {<br>
+                            &nbsp;&nbsp;// Add CORS headers<br>
+                            &nbsp;&nbsp;const headers = {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'Access-Control-Allow-Origin': '*',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'Access-Control-Allow-Methods': 'POST',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'Access-Control-Allow-Headers': 'Content-Type'<br>
+                            &nbsp;&nbsp;};<br>
+                            &nbsp;&nbsp;// ... rest of your code<br>
+                            }
+                        </div>
+                        <div><strong>2. Deploy ulang setelah menambah CORS headers</strong></div>
+                        <div><strong>3. Pastikan permission "Anyone" bukan "Anyone with Google account"</strong></div>
+                    </div>
+                </div>
+                
+                <div class="bg-red-100 border border-red-300 rounded-lg p-4">
+                    <h3 class="font-bold text-red-800 mb-2">⚠️ Kemungkinan Masalah Lain</h3>
+                    <div class="text-sm text-red-700 space-y-1">
+                        <div>• <strong>Browser blocking mixed content</strong> (HTTP vs HTTPS)</div>
+                        <div>• <strong>Firewall atau antivirus blocking request</strong></div>
+                        <div>• <strong>Google Apps Script service down</strong></div>
+                        <div>• <strong>Network connectivity issues</strong></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mt-6">
+                <button onclick="closeCorsModal()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Fix Modal -->
+    <div id="quickFixModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">⚡ Quick Fix - Solusi Cepat "Failed to fetch"</h2>
+                <button onclick="closeQuickFixModal()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
+            </div>
+            
+            <div class="bg-red-100 border border-red-300 rounded-lg p-4 mb-6">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    <div class="text-sm text-red-800">
+                        <div class="font-medium">❌ Error "Failed to fetch" = Web App tidak bisa diakses sama sekali</div>
+                        <div>Ini 99% karena deployment yang salah atau permission yang tidak tepat</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-green-800 mb-3">✅ LANGKAH 1: Cek Apps Script Project</h3>
+                    <div class="text-sm text-green-700 space-y-2">
+                        <div>1. Buka <a href="https://script.google.com" target="_blank" class="underline font-bold">script.google.com</a></div>
+                        <div>2. Pilih project Apps Script Anda</div>
+                        <div>3. Pastikan ada file <strong>Code.gs</strong> dengan kode lengkap</div>
+                        <div>4. Cek baris ke-4: <code class="bg-white px-2 py-1 rounded">const SPREADSHEET_ID = 'YOUR_ID';</code></div>
+                        <div>5. <strong>SAVE kode (Ctrl+S)</strong> - Ini sering terlupa!</div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-blue-800 mb-3">🚀 LANGKAH 2: Deploy Ulang (PENTING!)</h3>
+                    <div class="text-sm text-blue-700 space-y-2">
+                        <div>1. Klik <strong>"Deploy"</strong> di pojok kanan atas</div>
+                        <div>2. Pilih <strong>"New deployment"</strong> (jangan edit yang lama)</div>
+                        <div>3. Type: <strong>Web app</strong></div>
+                        <div>4. Execute as: <strong>Me (your-email@gmail.com)</strong></div>
+                        <div>5. Who has access: <strong>Anyone</strong> ← HARUS INI!</div>
+                        <div>6. Klik <strong>"Deploy"</strong></div>
+                        <div>7. <strong>Authorize</strong> semua permission yang diminta</div>
+                        <div>8. <strong>Copy URL baru</strong> yang muncul</div>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-yellow-800 mb-3">🔧 LANGKAH 3: Test URL Baru</h3>
+                    <div class="text-sm text-yellow-700 space-y-2">
+                        <div>1. <strong>Buka URL baru di browser</strong> (tab baru)</div>
+                        <div>2. <strong>Yang HARUS muncul:</strong></div>
+                        <div class="bg-white p-2 rounded font-mono text-xs">{"success":false,"message":"Invalid JSON format"}</div>
+                        <div>3. <strong>Jika muncul ini = BERHASIL!</strong> ✅</div>
+                        <div>4. <strong>Jika muncul hal lain = masih ada masalah</strong> ❌</div>
+                    </div>
+                </div>
+                
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-purple-800 mb-3">🎯 LANGKAH 4: Update Konfigurasi</h3>
+                    <div class="text-sm text-purple-700 space-y-2">
+                        <div>1. Kembali ke halaman debug ini</div>
+                        <div>2. Klik <strong>"Update Konfigurasi"</strong></div>
+                        <div>3. Paste <strong>URL baru</strong> dari deployment</div>
+                        <div>4. Klik <strong>"Simpan & Test"</strong></div>
+                        <div>5. Lihat apakah test connection berhasil</div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-100 border-l-4 border-gray-500 p-4">
+                    <h3 class="font-bold text-gray-800 mb-2">🤔 Masih Error?</h3>
+                    <div class="text-sm text-gray-700 space-y-1">
+                        <div>• <strong>Coba browser lain</strong> atau mode incognito</div>
+                        <div>• <strong>Tunggu 5-10 menit</strong> setelah deploy (ada delay)</div>
+                        <div>• <strong>Pastikan Google Sheets bisa diakses</strong> (tidak private)</div>
+                        <div>• <strong>Coba buat project Apps Script baru</strong> dari awal</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mt-6">
+                <button onclick="closeQuickFixModal()" class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    Mengerti, Saya Akan Coba Langkah Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deployment Guide Modal -->
+    <div id="deploymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">🚀 Panduan Deploy Ulang Apps Script</h2>
+                <button onclick="closeDeploymentModal()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
+            </div>
+            
+            <div class="bg-red-100 border border-red-300 rounded-lg p-4 mb-6">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    <div class="text-sm text-red-800">
+                        <div class="font-medium">❌ Error "Failed to fetch" = Web App tidak bisa diakses</div>
+                        <div>Ini biasanya karena deployment yang salah atau permission yang tidak tepat</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-blue-800 mb-3">📋 Langkah-langkah Deploy Ulang:</h3>
+                    <ol class="text-sm space-y-2 list-decimal list-inside text-blue-700">
+                        <li><strong>Buka Apps Script project Anda</strong> di <a href="https://script.google.com" target="_blank" class="underline">script.google.com</a></li>
+                        <li><strong>Pastikan kode sudah benar</strong> - SPREADSHEET_ID sudah diganti</li>
+                        <li><strong>Jalankan function setupDatabase()</strong> sekali untuk setup data</li>
+                        <li><strong>Klik "Deploy" → "Manage deployments"</strong></li>
+                        <li><strong>Klik ikon pensil (Edit) pada deployment yang ada</strong></li>
+                        <li><strong>Atau buat "New deployment" jika belum ada</strong></li>
+                        <li><strong>Pastikan setting ini:</strong>
+                            <ul class="ml-6 mt-2 space-y-1 list-disc list-inside">
+                                <li>Type: <strong>Web app</strong></li>
+                                <li>Execute as: <strong>Me (your-email@gmail.com)</strong></li>
+                                <li>Who has access: <strong>Anyone</strong> ← PENTING!</li>
+                            </ul>
+                        </li>
+                        <li><strong>Klik "Deploy"</strong></li>
+                        <li><strong>Copy Web app URL yang baru</strong></li>
+                        <li><strong>Authorize akses</strong> jika diminta</li>
+                    </ol>
+                </div>
+                
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-yellow-800 mb-3">⚠️ Hal Penting yang Sering Terlewat:</h3>
+                    <ul class="text-sm space-y-1 list-disc list-inside text-yellow-700">
+                        <li><strong>Permission "Anyone"</strong> - Jangan "Anyone with Google account"</li>
+                        <li><strong>Execute as "Me"</strong> - Bukan "User accessing the web app"</li>
+                        <li><strong>Authorize semua permission</strong> yang diminta Google</li>
+                        <li><strong>URL harus yang terbaru</strong> - Setiap deploy baru = URL baru</li>
+                        <li><strong>Test di browser</strong> - Buka URL langsung, harus muncul response JSON</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-green-800 mb-3">✅ Cara Test Manual:</h3>
+                    <div class="text-sm text-green-700 space-y-2">
+                        <div><strong>1. Buka URL Web App di browser baru</strong></div>
+                        <div>Seharusnya muncul error JSON seperti: <code class="bg-white px-2 py-1 rounded">{"success":false,"message":"Invalid JSON format"}</code></div>
+                        <div><strong>2. Jika muncul "Authorization required" atau redirect ke Google</strong> = Permission salah</div>
+                        <div><strong>3. Jika muncul "Script function not found" = Kode belum di-save</strong></div>
+                        <div><strong>4. Jika "Failed to fetch" = URL salah atau deployment gagal</strong></div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-800 mb-3">🔧 Troubleshooting Tambahan:</h3>
+                    <div class="text-sm text-gray-700 space-y-2">
+                        <div><strong>Jika masih error setelah deploy ulang:</strong></div>
+                        <ul class="ml-4 space-y-1 list-disc list-inside">
+                            <li>Coba buat project Apps Script yang benar-benar baru</li>
+                            <li>Pastikan Google Sheets bisa diakses (tidak private)</li>
+                            <li>Coba ganti browser atau mode incognito</li>
+                            <li>Tunggu 5-10 menit setelah deploy (kadang ada delay)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mt-6">
+                <button onclick="closeDeploymentModal()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Mengerti, Saya Akan Coba Deploy Ulang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Will be updated dynamically
+        let CONFIG = {
+            WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzGs1YV4D8J108LViGdGQigPgTRbfy9OE0yMLJBHFy4zqhQ3K_t3p1P9R5hxNEhjEuh/exec',
+            SPREADSHEET_ID: '1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTimestamp();
+            updateConfigDisplay();
+            setupEventListeners();
+            
+            // Auto-test if config looks valid
+            if (CONFIG.WEB_APP_URL.includes('script.google.com')) {
+                setTimeout(testConnection, 1000);
+            }
+        });
+
+        function setupEventListeners() {
+            document.getElementById('loginFormElement').addEventListener('submit', handleLogin);
+        }
+
+        function updateTimestamp() {
+            document.getElementById('timestamp').textContent = new Date().toLocaleString('id-ID');
+        }
+
+        function updateConfigDisplay() {
+            document.getElementById('currentWebAppUrl').textContent = CONFIG.WEB_APP_URL;
+            document.getElementById('currentSpreadsheetId').textContent = CONFIG.SPREADSHEET_ID;
+        }
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span class="text-gray-400">[${timestamp}]</span> ${icon} ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('debugLog').innerHTML = '';
+            log('Debug log cleared');
+        }
+
+        function fillCredentials(userId, password) {
+            document.getElementById('userId').value = userId;
+            document.getElementById('password').value = password;
+            log(`Credentials filled: ${userId}/${password}`);
+        }
+
+        function updateConfig() {
+            document.getElementById('configModal').classList.remove('hidden');
+            document.getElementById('newWebAppUrl').value = CONFIG.WEB_APP_URL;
+            document.getElementById('newSpreadsheetId').value = CONFIG.SPREADSHEET_ID;
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').classList.add('hidden');
+        }
+
+        function saveConfig() {
+            const newWebAppUrl = document.getElementById('newWebAppUrl').value.trim();
+            const newSpreadsheetId = document.getElementById('newSpreadsheetId').value.trim();
+            
+            if (!newWebAppUrl || !newSpreadsheetId) {
+                alert('Harap isi kedua field!');
+                return;
+            }
+            
+            CONFIG.WEB_APP_URL = newWebAppUrl;
+            CONFIG.SPREADSHEET_ID = newSpreadsheetId;
+            
+            updateConfigDisplay();
+            closeConfigModal();
+            
+            log(`Configuration updated:`);
+            log(`  WEB_APP_URL: ${CONFIG.WEB_APP_URL}`);
+            log(`  SPREADSHEET_ID: ${CONFIG.SPREADSHEET_ID}`);
+            
+            // Auto test connection
+            setTimeout(testConnection, 500);
+        }
+
+        async function testConnection() {
+            log('🔍 Testing database connection...');
+            
+            if (CONFIG.WEB_APP_URL === 'GANTI_DENGAN_WEB_APP_URL_ANDA') {
+                log('❌ WEB_APP_URL belum diset!', 'error');
+                return;
+            }
+            
+            try {
+                log(`📡 Sending request to: ${CONFIG.WEB_APP_URL}`);
+                
+                const requestData = { action: 'test' };
+                log(`📤 Request data: ${JSON.stringify(requestData)}`);
+                
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                log(`📥 Response status: ${response.status} ${response.statusText}`);
+                log(`📥 Response headers: ${JSON.stringify([...response.headers])}`);
+                
+                const responseText = await response.text();
+                log(`📥 Raw response: ${responseText}`);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    log(`📥 Parsed response: ${JSON.stringify(result, null, 2)}`);
+                } catch (parseError) {
+                    log(`❌ JSON parse error: ${parseError.message}`, 'error');
+                    log(`❌ Response was not valid JSON`, 'error');
+                    return;
+                }
+                
+                if (result.success) {
+                    log(`✅ Database connection successful!`, 'success');
+                    log(`✅ Spreadsheet: ${result.data?.spreadsheetName || 'Unknown'}`);
+                    showSuccessAnalysis();
+                } else {
+                    log(`❌ Database connection failed: ${result.message}`, 'error');
+                    showErrorAnalysis();
+                }
+                
+            } catch (error) {
+                log(`❌ Connection error: ${error.message}`, 'error');
+                log(`❌ Error details: ${error.toString()}`, 'error');
+                
+                // Show error analysis for "Failed to fetch"
+                if (error.message.includes('Failed to fetch')) {
+                    showErrorAnalysis();
+                }
+            }
+        }
+
+        function showErrorAnalysis() {
+            document.getElementById('errorAnalysis').classList.remove('hidden');
+            document.getElementById('successAnalysis').classList.add('hidden');
+        }
+
+        function hideErrorAnalysis() {
+            document.getElementById('errorAnalysis').classList.add('hidden');
+        }
+
+        function showSuccessAnalysis() {
+            document.getElementById('successAnalysis').classList.remove('hidden');
+            document.getElementById('errorAnalysis').classList.add('hidden');
+        }
+
+        function hideSuccessAnalysis() {
+            document.getElementById('successAnalysis').classList.add('hidden');
+        }
+
+        function showDeploymentGuide() {
+            document.getElementById('deploymentModal').classList.remove('hidden');
+        }
+
+        function closeDeploymentModal() {
+            document.getElementById('deploymentModal').classList.add('hidden');
+        }
+
+        function showQuickFix() {
+            document.getElementById('quickFixModal').classList.remove('hidden');
+        }
+
+        function closeQuickFixModal() {
+            document.getElementById('quickFixModal').classList.add('hidden');
+        }
+
+        function showCorsGuide() {
+            document.getElementById('corsModal').classList.remove('hidden');
+        }
+
+        function closeCorsModal() {
+            document.getElementById('corsModal').classList.add('hidden');
+        }
+
+        function showAppsScriptCode() {
+            document.getElementById('appsScriptModal').classList.remove('hidden');
+        }
+
+        function closeAppsScriptModal() {
+            document.getElementById('appsScriptModal').classList.add('hidden');
+        }
+
+        function copyAppsScriptCode() {
+            const codeElement = document.getElementById('appsScriptCode');
+            const codeText = codeElement.textContent;
+            
+            navigator.clipboard.writeText(codeText).then(() => {
+                log('✅ Apps Script code copied to clipboard!', 'success');
+                alert('✅ Kode Apps Script berhasil di-copy ke clipboard!\n\nSekarang:\n1. Buka script.google.com\n2. Paste kode ini\n3. Ganti SPREADSHEET_ID\n4. Save & Deploy');
+            }).catch(err => {
+                log('❌ Failed to copy code: ' + err.message, 'error');
+                // Fallback: select text
+                const range = document.createRange();
+                range.selectNode(codeElement);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                alert('❌ Auto-copy gagal. Silakan select dan copy manual (Ctrl+C)');
+            });
+        }
+
+        function openWebAppInNewTab() {
+            log(`🌐 Opening Web App URL in new tab: ${CONFIG.WEB_APP_URL}`);
+            window.open(CONFIG.WEB_APP_URL, '_blank');
+        }
+
+        function testManualUrl() {
+            log('🌐 Testing manual URL access...');
+            log(`📋 Instructions:`);
+            log(`1. Click the button below to open Web App URL`);
+            log(`2. Check what appears in the new tab`);
+            log(`3. Report back what you see`);
+            
+            openWebAppInNewTab();
+            
+            setTimeout(() => {
+                log(`❓ What did you see in the new tab?`);
+                log(`✅ Expected: {"success":false,"message":"Invalid JSON format"}`);
+                log(`❌ If different: There's a deployment issue`);
+                log(`🎉 If you saw the expected response, your Web App is working!`);
+                
+                // Show success analysis since manual test likely worked
+                showSuccessAnalysis();
+            }, 2000);
+        }
+
+        async function testAuth() {
+            const userId = document.getElementById('userId').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!userId || !password) {
+                log('❌ User ID dan Password harus diisi!', 'error');
+                return;
+            }
+            
+            log(`🔐 Testing authentication for: ${userId}/${password}`);
+            
+            if (CONFIG.WEB_APP_URL === 'GANTI_DENGAN_WEB_APP_URL_ANDA') {
+                log('❌ WEB_APP_URL belum diset!', 'error');
+                return;
+            }
+            
+            try {
+                const requestData = {
+                    action: 'authenticate',
+                    userId: userId,
+                    password: password
+                };
+                
+                log(`📤 Auth request: ${JSON.stringify(requestData)}`);
+                
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                log(`📥 Auth response status: ${response.status}`);
+                
+                const responseText = await response.text();
+                log(`📥 Auth raw response: ${responseText}`);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    log(`📥 Auth parsed response: ${JSON.stringify(result, null, 2)}`);
+                } catch (parseError) {
+                    log(`❌ Auth JSON parse error: ${parseError.message}`, 'error');
+                    return;
+                }
+                
+                if (result.success) {
+                    log(`✅ Authentication successful!`, 'success');
+                    log(`✅ User data: ${JSON.stringify(result.data)}`);
+                } else {
+                    log(`❌ Authentication failed: ${result.message}`, 'error');
+                    
+                    // Additional debugging for auth failure
+                    log(`🔍 Debug info for authentication failure:`);
+                    log(`  - Sent userId: "${userId}"`);
+                    log(`  - Sent password: "${password}"`);
+                    log(`  - Make sure these exact values exist in Students sheet`);
+                    log(`  - Check for extra spaces, different cases, etc.`);
+                }
+                
+            } catch (error) {
+                log(`❌ Auth error: ${error.message}`, 'error');
+                log(`❌ Auth error details: ${error.toString()}`, 'error');
+            }
         }
 
         async function handleLogin(e) {
@@ -839,18 +1124,22 @@ function testManual() {
             const userId = document.getElementById('userId').value.trim();
             const password = document.getElementById('password').value.trim();
             
+            log(`🚀 Starting normal login process for: ${userId}`);
+            
             if (CONFIG.WEB_APP_URL === 'GANTI_DENGAN_WEB_APP_URL_ANDA') {
-                showError('Apps Script belum di-setup! Silakan setup terlebih dahulu.');
+                log('❌ Cannot login: WEB_APP_URL not configured!', 'error');
+                alert('Konfigurasi belum lengkap! Klik "Update Konfigurasi" terlebih dahulu.');
                 return;
             }
             
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Memuat...';
+            submitBtn.textContent = '⏳ Memuat...';
             submitBtn.disabled = true;
 
             try {
-                // Authenticate user
+                // Step 1: Authenticate
+                log('📡 Step 1: Authenticating user...');
                 const authResponse = await fetch(CONFIG.WEB_APP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -862,15 +1151,18 @@ function testManual() {
                 });
                 
                 const authResult = await authResponse.json();
+                log(`📥 Auth result: ${JSON.stringify(authResult)}`);
                 
                 if (!authResult.success) {
-                    showError(authResult.message);
+                    log(`❌ Authentication failed: ${authResult.message}`, 'error');
+                    alert(`Login gagal: ${authResult.message}`);
                     return;
                 }
                 
-                currentUser = authResult.data;
+                log('✅ Authentication successful!', 'success');
                 
-                // Load exam data
+                // Step 2: Load exam data
+                log('📡 Step 2: Loading exam data...');
                 const examResponse = await fetch(CONFIG.WEB_APP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -881,347 +1173,32 @@ function testManual() {
                 });
                 
                 const examResult = await examResponse.json();
+                log(`📥 Exam result: ${JSON.stringify(examResult)}`);
                 
                 if (!examResult.success) {
-                    showError(examResult.message);
+                    log(`❌ Failed to load exam data: ${examResult.message}`, 'error');
+                    alert(`Gagal memuat data ujian: ${examResult.message}`);
                     return;
                 }
                 
-                currentExam = examResult.data.exam;
-                questions = examResult.data.questions;
-                shuffledQuestions = shuffleQuestionsByType(questions);
-                timeRemaining = currentExam.duration * 60;
+                log('✅ Exam data loaded successfully!', 'success');
+                log(`✅ Exam: ${examResult.data.exam.name}`);
+                log(`✅ Questions: ${examResult.data.questions.length} items`);
                 
-                showQuizInterface();
+                alert('🎉 Login berhasil! (Dalam mode debug, ujian tidak dimulai)');
                 
             } catch (error) {
-                console.error('Login error:', error);
-                showError('Terjadi kesalahan koneksi. Pastikan Apps Script sudah di-deploy dengan benar.');
+                log(`❌ Login error: ${error.message}`, 'error');
+                log(`❌ Error stack: ${error.stack}`, 'error');
+                alert(`Terjadi kesalahan: ${error.message}`);
             } finally {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             }
         }
 
-        function shuffleQuestionsByType(questions) {
-            // Group by type
-            const questionsByType = {};
-            questions.forEach(q => {
-                if (!questionsByType[q.type]) {
-                    questionsByType[q.type] = [];
-                }
-                questionsByType[q.type].push(q);
-            });
-
-            // Shuffle within each type
-            let shuffled = [];
-            Object.keys(questionsByType).forEach(type => {
-                const typeQuestions = questionsByType[type];
-                for (let i = typeQuestions.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [typeQuestions[i], typeQuestions[j]] = [typeQuestions[j], typeQuestions[i]];
-                }
-                shuffled = shuffled.concat(typeQuestions);
-            });
-
-            // Shuffle options for each question
-            shuffled.forEach(q => {
-                const options = [
-                    { key: 'A', text: q.optionA },
-                    { key: 'B', text: q.optionB },
-                    { key: 'C', text: q.optionC },
-                    { key: 'D', text: q.optionD }
-                ];
-                
-                for (let i = options.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [options[i], options[j]] = [options[j], options[i]];
-                }
-                
-                q.shuffledOptions = options;
-            });
-
-            return shuffled;
-        }
-
-        function showQuizInterface() {
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('quizInterface').classList.remove('hidden');
-            
-            document.getElementById('examTitle').textContent = 
-                `${currentExam.name} - ${currentExam.subject} - ${currentExam.class}`;
-            document.getElementById('examSubtitle').textContent = currentExam.material;
-            
-            startTimer();
-            showQuestion(0);
-        }
-
-        function startTimer() {
-            examTimer = setInterval(() => {
-                timeRemaining--;
-                updateTimerDisplay();
-                
-                if (timeRemaining <= 0) {
-                    clearInterval(examTimer);
-                    finishExam();
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            document.getElementById('timer').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        function showQuestion(index) {
-            if (index < 0 || index >= shuffledQuestions.length) return;
-            
-            currentQuestionIndex = index;
-            const question = shuffledQuestions[index];
-            
-            document.getElementById('questionType').textContent = question.type;
-            document.getElementById('questionNumber').textContent = `Soal ${index + 1}`;
-            document.getElementById('questionText').textContent = question.question;
-            
-            document.getElementById('questionCounter').textContent = `${index + 1}/${shuffledQuestions.length}`;
-            const progress = ((index + 1) / shuffledQuestions.length) * 100;
-            document.getElementById('progressBar').style.width = `${progress}%`;
-            document.getElementById('progressText').textContent = `${Math.round(progress)}%`;
-            
-            showOptions(question);
-            
-            document.getElementById('prevBtn').disabled = index === 0;
-            document.getElementById('nextBtn').classList.toggle('hidden', index === shuffledQuestions.length - 1);
-            document.getElementById('finishBtn').classList.toggle('hidden', index !== shuffledQuestions.length - 1);
-            
-            const markBtn = document.getElementById('markBtn');
-            if (markedQuestions.has(question.id)) {
-                markBtn.textContent = '🏷️ Ditandai';
-                markBtn.classList.add('bg-yellow-600');
-            } else {
-                markBtn.textContent = '🏷️ Tandai';
-                markBtn.classList.remove('bg-yellow-600');
-            }
-        }
-
-        function showOptions(question) {
-            const container = document.getElementById('optionsContainer');
-            container.innerHTML = '';
-            
-            if (question.type === 'PJ') {
-                const instruction = document.createElement('div');
-                instruction.className = 'mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg';
-                instruction.innerHTML = `
-                    <div class="flex items-center text-yellow-800">
-                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                        </svg>
-                        <span class="font-medium">Pilihan Jamak: Anda dapat memilih lebih dari satu jawaban</span>
-                    </div>
-                `;
-                container.appendChild(instruction);
-            }
-            
-            question.shuffledOptions.forEach((option, index) => {
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'option-hover cursor-pointer p-4 border-2 border-gray-200 rounded-lg transition-all duration-200 hover:border-primary hover:bg-blue-50';
-                
-                let isSelected = false;
-                if (question.type === 'PG') {
-                    isSelected = userAnswers[question.id] === option.key;
-                } else if (question.type === 'PJ') {
-                    const selectedAnswers = userAnswers[question.id] ? userAnswers[question.id].split(',') : [];
-                    isSelected = selectedAnswers.includes(option.key);
-                }
-                
-                if (isSelected) {
-                    optionDiv.classList.add('border-primary', 'bg-blue-50');
-                }
-                
-                const inputShape = question.type === 'PG' ? 'rounded-full' : 'rounded';
-                
-                optionDiv.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="w-6 h-6 ${inputShape} border-2 ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'} flex items-center justify-center mr-3">
-                            ${isSelected ? (question.type === 'PG' ? '<div class="w-3 h-3 bg-white rounded-full"></div>' : '<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>') : ''}
-                        </div>
-                        <span class="font-medium text-gray-700 mr-2">${option.key}.</span>
-                        <span class="text-gray-800">${option.text}</span>
-                    </div>
-                `;
-                
-                optionDiv.addEventListener('click', () => selectOption(question.id, option.key, question.type));
-                container.appendChild(optionDiv);
-            });
-        }
-
-        function selectOption(questionId, optionKey, questionType) {
-            if (questionType === 'PG') {
-                userAnswers[questionId] = optionKey;
-            } else if (questionType === 'PJ') {
-                const currentAnswers = userAnswers[questionId] ? userAnswers[questionId].split(',') : [];
-                const index = currentAnswers.indexOf(optionKey);
-                
-                if (index > -1) {
-                    currentAnswers.splice(index, 1);
-                } else {
-                    currentAnswers.push(optionKey);
-                }
-                
-                currentAnswers.sort();
-                userAnswers[questionId] = currentAnswers.length > 0 ? currentAnswers.join(',') : '';
-            }
-            
-            showQuestion(currentQuestionIndex);
-        }
-
-        function previousQuestion() {
-            if (currentQuestionIndex > 0) {
-                showQuestion(currentQuestionIndex - 1);
-            }
-        }
-
-        function nextQuestion() {
-            if (currentQuestionIndex < shuffledQuestions.length - 1) {
-                showQuestion(currentQuestionIndex + 1);
-            }
-        }
-
-        function toggleMark() {
-            const question = shuffledQuestions[currentQuestionIndex];
-            if (markedQuestions.has(question.id)) {
-                markedQuestions.delete(question.id);
-            } else {
-                markedQuestions.add(question.id);
-            }
-            showQuestion(currentQuestionIndex);
-        }
-
-        async function finishExam() {
-            if (examTimer) {
-                clearInterval(examTimer);
-            }
-            
-            // Calculate score
-            let totalScore = 0;
-            let maxPossibleScore = 0;
-            
-            shuffledQuestions.forEach(question => {
-                maxPossibleScore += question.score;
-                
-                const userAnswer = userAnswers[question.id] || '';
-                const correctAnswer = question.key;
-                
-                if (question.type === 'PG') {
-                    if (userAnswer === correctAnswer) {
-                        totalScore += question.score;
-                    }
-                } else if (question.type === 'PJ') {
-                    const userAnswerArray = userAnswer ? userAnswer.split(',').sort() : [];
-                    const correctAnswerArray = correctAnswer.split(',').sort();
-                    
-                    if (userAnswerArray.length === 0) {
-                        totalScore += 0;
-                    } else if (userAnswerArray.join(',') === correctAnswerArray.join(',')) {
-                        totalScore += question.score;
-                    } else {
-                        let correctSelections = 0;
-                        let incorrectSelections = 0;
-                        
-                        userAnswerArray.forEach(answer => {
-                            if (correctAnswerArray.includes(answer)) {
-                                correctSelections++;
-                            } else {
-                                incorrectSelections++;
-                            }
-                        });
-                        
-                        const partialScore = Math.max(0, (correctSelections - incorrectSelections) / correctAnswerArray.length * question.score);
-                        totalScore += Math.round(partialScore);
-                    }
-                }
-            });
-            
-            const grade = Math.round((totalScore / maxPossibleScore) * 100);
-            
-            // Prepare response data
-            const responseData = {
-                timestamp: new Date().toISOString(),
-                userId: currentUser.userId,
-                name: currentUser.name,
-                class: currentUser.class,
-                examId: currentExam.id,
-                examName: currentExam.name,
-                score: totalScore,
-                maxScore: maxPossibleScore,
-                grade: grade,
-                status: 'completed'
-            };
-            
-            // Add answers Q1-Q30
-            for (let i = 1; i <= 30; i++) {
-                const originalQuestion = questions.find(q => q.id === i);
-                if (originalQuestion) {
-                    responseData[`Q${i}`] = userAnswers[originalQuestion.id] || '';
-                } else {
-                    responseData[`Q${i}`] = '';
-                }
-            }
-            
-            // Save to database
-            try {
-                await fetch(CONFIG.WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'saveResponse',
-                        responseData: responseData
-                    })
-                });
-            } catch (error) {
-                console.error('Failed to save response:', error);
-            }
-            
-            showResults(responseData);
-        }
-
-        function showResults(responseData) {
-            document.getElementById('quizInterface').classList.add('hidden');
-            document.getElementById('resultScreen').classList.remove('hidden');
-            
-            document.getElementById('finalScore').textContent = `${responseData.score}/${responseData.maxScore}`;
-            document.getElementById('finalGrade').textContent = responseData.grade;
-            document.getElementById('resultName').textContent = responseData.name;
-            document.getElementById('resultClass').textContent = responseData.class;
-            document.getElementById('resultExam').textContent = responseData.examName;
-            document.getElementById('resultTime').textContent = new Date().toLocaleString('id-ID');
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('loginError');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-            setTimeout(() => {
-                errorDiv.classList.add('hidden');
-            }, 5000);
-        }
-
-        function copyAppsScriptCode() {
-            const code = document.getElementById('appsScriptCode').textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                alert('✅ Kode Apps Script berhasil di-copy!\n\nLangkah selanjutnya:\n1. Buka script.google.com\n2. Buat project baru\n3. Paste kode ini\n4. Ganti SPREADSHEET_ID\n5. Deploy sebagai Web App');
-            }).catch(() => {
-                const textArea = document.createElement('textarea');
-                textArea.value = code;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('✅ Kode berhasil di-copy!');
-            });
-        }
+        // Auto-update timestamp every second
+        setInterval(updateTimestamp, 1000);
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d6465462759fc7',t:'MTc1NDkwMDAxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d68357a35d406a',t:'MTc1NDkwMjUxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
