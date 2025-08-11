@@ -3,1463 +3,1337 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asesmen Online Fikih - Sistem Terintegrasi Google Sheets</title>
+    <title>Ujian Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        accent: '#F59E0B'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-bar { transition: width 0.3s ease; }
         .question-card { transition: all 0.3s ease; }
-        .question-card:hover { transform: translateY(-2px); }
-        .option-button { transition: all 0.2s ease; }
-        .option-button:hover { transform: scale(1.02); }
-        .selected { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-        .correct { background: linear-gradient(135deg, #10b981, #059669); }
-        .incorrect { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .progress-bar { transition: width 0.5s ease; }
-        .loading { animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .option-hover:hover { transform: translateX(4px); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <!-- Header -->
-    <div class="bg-white shadow-lg border-b-4 border-blue-500">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
+<body class="gradient-bg min-h-screen">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+            <p class="text-gray-600 font-medium">Memuat aplikasi...</p>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="loginForm" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 border-4 border-primary shadow-lg">
+                    <img src="https://i.imgur.com/0Laf7Zu.png" alt="MIN Singkawang Logo" class="w-full h-full object-cover" onerror="this.src=''; this.alt='Logo failed to load'; this.style.display='none';">
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">MIN SINGKAWANG</h1>
+                <p class="text-gray-600 font-medium">Madrasah Maju, Bermutu, Mendunia</p>
+            </div>
+            
+            <form id="loginFormElement" class="space-y-6">
                 <div>
-                    <h1 id="exam-title" class="text-2xl font-bold text-gray-800">Asesmen Online Fikih</h1>
-                    <p id="exam-subtitle" class="text-gray-600">Sistem Terintegrasi Google Sheets</p>
-                </div>
-                <div class="text-right">
-                    <div class="text-sm text-gray-500">Waktu Tersisa</div>
-                    <div id="timer" class="text-xl font-bold text-blue-600">30:00</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Progress Bar -->
-    <div class="bg-white shadow-sm">
-        <div class="container mx-auto px-6 py-3">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-700">Progress</span>
-                <span id="progress-text" class="text-sm text-gray-500">0 dari 0 soal</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div id="progress-bar" class="progress-bar bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container mx-auto px-6 py-8">
-        <!-- Loading Screen -->
-        <div id="loading-screen" class="max-w-md mx-auto">
-            <div class="bg-white rounded-xl shadow-lg p-8 text-center">
-                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <div class="loading w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Memuat Sistem Asesmen</h2>
-                <p class="text-gray-600 mb-4">Menghubungkan ke Google Sheets...</p>
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p class="text-sm text-blue-700 mb-2">
-                        <strong>📊 Spreadsheet ID:</strong> 1LXjILS4HLHFlbzl2aIYDrBLKM4D4bp2PUnJBgk81RqU
-                    </p>
-                    <p class="text-sm text-blue-700">
-                        <strong>🔗 Apps Script URL:</strong> <span class="font-mono text-xs">AKfycbwJkSCNQCLERl0R01p5Jc59ehEVe2yQjd0EvrxbBRWmCFXip1JxzLsPf-3xPF_HSI71fg</span>
-                    </p>
-                </div>
-                <div id="connection-status" class="mt-4 p-3 rounded-lg text-sm text-center hidden">
-                    <span id="connection-message"></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Login Screen -->
-        <div id="login-screen" class="hidden max-w-md mx-auto">
-            <div class="bg-white rounded-xl shadow-lg p-8">
-                <div class="text-center mb-6">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Login Siswa</h2>
-                    <p class="text-gray-600">Masukkan No. Induk dan Password Anda</p>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">No. Induk Siswa:</label>
-                        <input type="text" id="login-student-id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                               placeholder="Masukkan nomor induk">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Password:</label>
-                        <input type="password" id="login-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                               placeholder="Masukkan password">
-                    </div>
-                    
-                    <button onclick="loginStudent()" id="login-btn" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                        🔐 Login
-                    </button>
-                    
-                    <div id="login-error" class="hidden p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Exam Selection Screen -->
-        <div id="exam-selection-screen" class="hidden max-w-4xl mx-auto">
-            <div class="bg-white rounded-xl shadow-lg p-8">
-                <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Pilih Ujian</h2>
-                    <p class="text-gray-600">Selamat datang <span id="student-name-display" class="font-semibold text-blue-600"></span>! Pilih ujian yang tersedia untuk Anda.</p>
-                </div>
-
-                <div id="available-exams" class="space-y-4">
-                    <!-- Available exams will be loaded here -->
-                </div>
-
-                <div id="no-exams" class="hidden text-center py-12">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Tidak Ada Ujian Aktif</h3>
-                    <p class="text-gray-500 mb-6">Saat ini tidak ada ujian yang tersedia untuk kelas Anda.</p>
-                    <button onclick="refreshExams()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        🔄 Refresh
-                    </button>
-                </div>
-
-                <div class="mt-6 text-center">
-                    <button onclick="logoutStudent()" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
-                        ← Kembali ke Login
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quiz Screen -->
-        <div id="quiz-screen" class="hidden">
-            <div class="max-w-4xl mx-auto">
-                <div id="question-container" class="bg-white rounded-xl shadow-lg p-8 question-card">
-                    <!-- Questions will be loaded here -->
+                    <label class="block text-sm font-medium text-gray-700 mb-2">User ID</label>
+                    <input type="text" id="userId" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                           placeholder="Masukkan User ID">
                 </div>
                 
-                <div class="flex justify-between mt-6">
-                    <button id="prev-btn" onclick="previousQuestion()" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        ← Sebelumnya
-                    </button>
-                    <button id="next-btn" onclick="nextQuestion()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        Selanjutnya →
-                    </button>
-                    <button id="finish-btn" onclick="finishQuiz()" class="hidden px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        Selesai
-                    </button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                           placeholder="Masukkan Password">
+                </div>
+                
+                <div id="connectionStatus" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="text-sm text-yellow-800">
+                            <div class="font-medium">Memeriksa Koneksi Database...</div>
+                            <div>Sedang menguji koneksi ke Google Sheets</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-6 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                    Masuk
+                </button>
+            </form>
+            
+            <div id="loginError" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Quiz Interface -->
+    <div id="quizInterface" class="hidden min-h-screen p-4">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl card-shadow p-6 mb-6 animate-fade-in">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 id="examTitle" class="text-2xl font-bold text-gray-800 mb-2">Nama Ujian - Mapel - Kelas</h1>
+                    <p id="examSubtitle" class="text-gray-600">Materi Ujian</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center space-x-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary" id="timer">00:00</div>
+                        <div class="text-sm text-gray-500">Waktu Tersisa</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-accent" id="questionCounter">1/20</div>
+                        <div class="text-sm text-gray-500">Soal</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mt-6">
+                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Progress</span>
+                    <span id="progressText">5%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-gradient-to-r from-primary to-accent h-2 rounded-full progress-bar" style="width: 5%"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Results Screen -->
-        <div id="results-screen" class="hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-white rounded-xl shadow-lg p-8 text-center">
-                    <div class="mb-6">
-                        <div id="result-icon" class="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center">
-                            <!-- Icon will be set by JavaScript -->
-                        </div>
-                        <h2 class="text-3xl font-bold text-gray-800 mb-2">Asesmen Selesai!</h2>
-                        <p id="result-message" class="text-gray-600"></p>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-blue-50 rounded-lg p-6">
-                            <div class="text-3xl font-bold text-blue-600" id="total-score">0</div>
-                            <div class="text-gray-600">Total Skor</div>
-                        </div>
-                        <div class="bg-green-50 rounded-lg p-6">
-                            <div class="text-3xl font-bold text-green-600" id="correct-answers">0</div>
-                            <div class="text-gray-600">Jawaban Benar</div>
-                        </div>
-                        <div class="bg-purple-50 rounded-lg p-6">
-                            <div class="text-3xl font-bold text-purple-600" id="percentage">0%</div>
-                            <div class="text-gray-600">Persentase</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
-                        <h3 class="font-semibold text-gray-800 mb-4">Rincian Hasil:</h3>
-                        <div id="detailed-results" class="space-y-2">
-                            <!-- Detailed results will be shown here -->
-                        </div>
-                    </div>
-
-                    <div class="flex gap-4 justify-center">
-                        <button onclick="saveResults()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                            💾 Simpan Hasil
-                        </button>
-                        <button onclick="restartQuiz()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                            🔄 Kembali ke Login
-                        </button>
-                    </div>
+        <!-- Question Card -->
+        <div class="bg-white rounded-2xl card-shadow p-8 mb-6 animate-fade-in question-card">
+            <div class="mb-6">
+                <div class="flex items-center mb-4">
+                    <span class="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium mr-3" id="questionType">Pilihan Ganda</span>
+                    <span class="text-gray-500 text-sm" id="questionNumber">Soal 1</span>
                 </div>
+                <h2 id="questionText" class="text-xl font-semibold text-gray-800 leading-relaxed">
+                    Pertanyaan akan muncul di sini...
+                </h2>
+            </div>
+            
+            <div id="optionsContainer" class="space-y-3">
+                <!-- Options will be populated here -->
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="bg-white rounded-2xl card-shadow p-6 animate-fade-in">
+            <div class="flex justify-between items-center">
+                <button id="prevBtn" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    ← Sebelumnya
+                </button>
+                
+                <div class="flex space-x-3">
+                    <button id="markBtn" class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all duration-200">
+                        🏷️ Tandai
+                    </button>
+                    <button id="nextBtn" class="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                        Selanjutnya →
+                    </button>
+                </div>
+                
+                <button id="finishBtn" class="hidden px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                    Selesai
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 text-center">
-            <div class="loading w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p id="loading-text" class="text-gray-700">Memuat data...</p>
+    <!-- Result Screen -->
+    <div id="resultScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-2xl animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Ujian Selesai!</h1>
+                <p class="text-gray-600">Hasil ujian Anda telah tersimpan</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600" id="finalScore">0</div>
+                        <div class="text-blue-800 font-medium">Skor</div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600" id="finalGrade">0</div>
+                        <div class="text-green-800 font-medium">Nilai</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Detail Hasil:</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-600">Nama:</span>
+                        <span class="font-medium ml-2" id="resultName">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Kelas:</span>
+                        <span class="font-medium ml-2" id="resultClass">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Ujian:</span>
+                        <span class="font-medium ml-2" id="resultExam">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Waktu:</span>
+                        <span class="font-medium ml-2" id="resultTime">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button onclick="location.reload()" 
+                        class="px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                    Kembali ke Login
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Global Variables - Konfigurasi Langsung
-        let systemConfig = {
-            appsScriptUrl: 'https://script.google.com/macros/s/AKfycbwJkSCNQCLERl0R01p5Jc59ehEVe2yQjd0EvrxbBRWmCFXip1JxzLsPf-3xPF_HSI71fg/exec',
-            spreadsheetId: '1LXjILS4HLHFlbzl2aIYDrBLKM4D4bp2PUnJBgk81RqU'
+        // Configuration - Apps Script Web App URL
+        const CONFIG = {
+            WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz57L7gYUoovZjvpdgxg1PfNUAcF23d3b-1pJk2BvtYZD7wRz-wQw_xCZpbfayJEUmm/exec',
+            SPREADSHEET_ID: '1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk'
         };
-        let currentStudent = null;
+
+        // Global variables
+        let currentUser = null;
         let currentExam = null;
-        let allQuestions = [];
+        let questions = [];
+        let shuffledQuestions = [];
         let currentQuestionIndex = 0;
-        let userAnswers = [];
-        let timeLeft = 1800; // 30 minutes
-        let timerInterval;
+        let userAnswers = {};
+        let markedQuestions = new Set();
+        let examTimer = null;
+        let timeRemaining = 0;
 
-        // System Initialization - Auto Start
-        async function initializeSystem() {
-            console.log('🚀 Starting system initialization...');
-            console.log('📊 Apps Script URL:', systemConfig.appsScriptUrl);
-            console.log('📋 Spreadsheet ID:', systemConfig.spreadsheetId);
-            
-            try {
-                // Test connection first
-                console.log('🔍 Testing Google Sheets connection...');
-                await testConnection();
-                
-                console.log('✅ Connection test passed, loading data...');
-                
-                // Load data from Google Sheets
-                await loadStudentsData();
-                await loadExamsData();
-                await loadSettingsData();
-                
-                console.log('✅ Google Sheets connection successful');
-                
-                // Show login screen after successful loading
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('login-screen').classList.remove('hidden');
-                
-                // Show success notification
-                setTimeout(() => {
-                    alert('✅ Koneksi Google Sheets Berhasil!\n\nSistem telah terhubung dengan database.\nSilakan login dengan akun Anda.');
-                }, 500);
-                
-            } catch (error) {
-                console.error('❌ Google Sheets connection failed:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    stack: error.stack,
-                    url: systemConfig.appsScriptUrl
-                });
-                
-                // Initialize demo mode as fallback
-                initializeDemoMode();
-                
-                // Show detailed error notification
-                setTimeout(() => {
-                    alert(`❌ Koneksi Google Sheets Gagal!\n\nError: ${error.message}\n\n🎮 Mode Demo Aktif!\n\n🔑 Login Demo:\n• No. Induk: 001, Password: test123 (Kelas 5A)\n• No. Induk: 002, Password: test456 (Kelas 5A)\n• No. Induk: 003, Password: test789 (Kelas 5B)\n\n🔧 Periksa:\n1. Apps Script URL sudah benar?\n2. Spreadsheet ID sudah benar?\n3. Apps Script sudah di-deploy?`);
-                }, 1000);
-                
-                // Show login screen
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('login-screen').classList.remove('hidden');
-            }
-        }
-
-        function initializeDemoMode() {
-            // Initialize demo data
-            initializeSampleQuestions();
-            
-            // Set demo students data
-            window.studentsData = [
-                { noInduk: '001', nama: 'Ahmad Fauzi', kelas: '5A', password: 'test123', status: 'aktif' },
-                { noInduk: '002', nama: 'Siti Aminah', kelas: '5A', password: 'test456', status: 'aktif' },
-                { noInduk: '003', nama: 'Muhammad Ali', kelas: '5B', password: 'test789', status: 'aktif' }
-            ];
-            
-            // Update title from demo settings
-            updateAppTitleFromDemo();
-        }
-
-        function updateAppTitleFromDemo() {
-            // Update title from demo active exams
-            if (window.sampleExams && window.sampleExams.length > 0) {
-                const activeExam = window.sampleExams.find(exam => exam.status === 'aktif') || window.sampleExams[0];
-                
-                // App title from namaUjian + mapel
-                const appTitle = `${activeExam.namaUjian} - ${activeExam.mapel}`;
-                document.getElementById('exam-title').textContent = appTitle;
-                
-                // Subtitle from materi
-                document.getElementById('exam-subtitle').textContent = activeExam.materi;
-                
-                console.log('Demo title updated from active exam:', appTitle, '|', activeExam.materi);
-            } else if (window.examSettings && Object.keys(window.examSettings).length > 0) {
-                const firstExamId = Object.keys(window.examSettings)[0];
-                const firstExam = window.examSettings[firstExamId];
-                
-                const appTitle = `${firstExam.namaUjian} - ${firstExam.mapel}`;
-                document.getElementById('exam-title').textContent = appTitle;
-                document.getElementById('exam-subtitle').textContent = firstExam.materi;
-                
-                console.log('Demo title updated from exam settings');
-            }
-        }
-
-        function initializeSampleQuestions() {
-            // Sample exam settings from Settings sheet
-            window.examSettings = {
-                'UJ001': {
-                    namaUjian: 'Ulangan Harian Infak',
-                    mapel: 'Fikih',
-                    kelas: '5A',
-                    materi: 'Infak dan Sedekah'
-                },
-                'UJ002': {
-                    namaUjian: 'Quiz Zakat',
-                    mapel: 'Fikih', 
-                    kelas: '5B',
-                    materi: 'Zakat Fitrah dan Zakat Mal'
-                }
-            };
-
-            // Sample questions for demo
-            window.sampleExams = [
+        // Sample data for demo (replace with actual Google Sheets data)
+        const SAMPLE_DATA = {
+            students: [
+                { userId: 'demo', password: 'demo', name: 'Demo User', class: 'XII IPA 1' }
+            ],
+            exam: {
+                id: 1,
+                name: 'Ujian Matematika',
+                subject: 'Matematika',
+                material: 'Integral dan Diferensial',
+                class: 'XII IPA 1',
+                date: '2024-01-15',
+                time: '08:00',
+                duration: 90,
+                status: 'active'
+            },
+            questions: [
                 {
-                    ujianId: 'UJ001',
-                    namaUjian: 'Ulangan Harian Infak',
-                    mapel: 'Fikih',
-                    kelas: '5A',
-                    materi: 'Infak dan Sedekah',
-                    waktuMenit: 30,
-                    tanggalMulai: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-                    tanggalSelesai: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-                    status: 'aktif'
+                    id: 1, examId: 1, type: 'PG', score: 10,
+                    question: 'Hasil dari integral ∫2x dx adalah...',
+                    optionA: 'x² + C', optionB: '2x² + C', optionC: 'x²/2 + C', optionD: '2x + C',
+                    key: 'A'
                 },
                 {
-                    ujianId: 'UJ002',
-                    namaUjian: 'Quiz Zakat',
-                    mapel: 'Fikih',
-                    kelas: '5B',
-                    materi: 'Zakat Fitrah dan Zakat Mal',
-                    waktuMenit: 20,
-                    tanggalMulai: new Date(Date.now() - 3600000).toISOString(),
-                    tanggalSelesai: new Date(Date.now() + 3600000).toISOString(),
-                    status: 'aktif'
-                }
-            ];
-
-            window.sampleQuestions = {
-                'UJ001': [
-                    {
-                        type: 'multipleChoice',
-                        question: 'Anjuran bagi orang yang memiliki kelebihan harta untuk dirinya dan orang yang ditanggung adalah ….',
-                        options: ['berpuasa', 'salat', 'berniaga', 'infak'],
-                        correct: 3,
-                        points: 1
-                    },
-                    {
-                        type: 'fillInBlank',
-                        question: 'Infak berasal dari kata nafaqa, yang artinya ….',
-                        correct: ['menafkah', 'membelanjakan harta', 'mengeluarkan'],
-                        points: 1
-                    },
-                    {
-                        type: 'multipleChoice',
-                        question: 'Hukum infak dalam Islam adalah ….',
-                        options: ['wajib', 'sunnah', 'mubah', 'makruh'],
-                        correct: 1,
-                        points: 1
-                    },
-                    {
-                        type: 'multipleChoiceComplex',
-                        question: 'Yang termasuk adab berinfak adalah … (pilih lebih dari satu)',
-                        options: ['ikhlas', 'riya', 'tidak menyakiti', 'sombong'],
-                        correct: [0, 2],
-                        points: 2
-                    }
-                ],
-                'UJ002': [
-                    {
-                        type: 'multipleChoice',
-                        question: 'Zakat fitrah wajib dikeluarkan pada bulan ….',
-                        options: ['Ramadan', 'Syawal', 'Dzulhijjah', 'Muharram'],
-                        correct: 0,
-                        points: 1
-                    },
-                    {
-                        type: 'fillInBlank',
-                        question: 'Nisab zakat emas adalah … gram.',
-                        correct: ['85', '85 gram'],
-                        points: 1
-                    }
-                ]
-            };
-        }
-
-
-
-        // Connection Status Functions
-        function updateConnectionStatus(message, type = 'info') {
-            const statusDiv = document.getElementById('connection-status');
-            const messageSpan = document.getElementById('connection-message');
-            
-            statusDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
-            
-            switch(type) {
-                case 'success':
-                    statusDiv.classList.add('bg-green-100', 'text-green-700');
-                    break;
-                case 'error':
-                    statusDiv.classList.add('bg-red-100', 'text-red-700');
-                    break;
-                default:
-                    statusDiv.classList.add('bg-blue-100', 'text-blue-700');
-            }
-            
-            messageSpan.textContent = message;
-        }
-
-        // Connection Test Function
-        async function testConnection() {
-            console.log('🔗 Testing connection to Apps Script...');
-            updateConnectionStatus('🔍 Testing connection...', 'info');
-            
-            const response = await fetch(systemConfig.appsScriptUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    id: 2, examId: 1, type: 'PG', score: 10,
+                    question: 'Turunan dari f(x) = 3x² + 2x - 1 adalah...',
+                    optionA: '6x + 2', optionB: '3x + 2', optionC: '6x - 1', optionD: '3x² + 2',
+                    key: 'A'
                 },
-                body: new URLSearchParams({
-                    action: 'test',
-                    spreadsheetId: systemConfig.spreadsheetId
-                })
-            });
+                {
+                    id: 3, examId: 1, type: 'PJ', score: 15,
+                    question: 'Manakah dari berikut ini yang merupakan bilangan prima? (Pilih semua yang benar)',
+                    optionA: '17', optionB: '21', optionC: '23', optionD: '25',
+                    key: 'A,C'
+                },
+                {
+                    id: 4, examId: 1, type: 'PJ', score: 20,
+                    question: 'Sifat-sifat fungsi kuadrat f(x) = ax² + bx + c dengan a > 0 adalah... (Pilih semua yang benar)',
+                    optionA: 'Grafik membuka ke atas', optionB: 'Memiliki nilai minimum', optionC: 'Grafik membuka ke bawah', optionD: 'Memiliki sumbu simetri',
+                    key: 'A,B,D'
+                }
+            ]
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('loginForm').classList.remove('hidden');
+                testDatabaseConnection();
+            }, 1500);
+
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('loginFormElement').addEventListener('submit', handleLogin);
             
-            console.log('📡 Response status:', response.status);
-            console.log('📡 Response ok:', response.ok);
-            
-            if (!response.ok) {
-                updateConnectionStatus(`❌ HTTP Error: ${response.status} ${response.statusText}`, 'error');
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            console.log('📡 Response data:', data);
-            
-            if (!data.success) {
-                updateConnectionStatus(`❌ ${data.error || 'Connection test failed'}`, 'error');
-                throw new Error(data.error || 'Connection test failed');
-            }
-            
-            updateConnectionStatus('✅ Connection successful!', 'success');
-            console.log('✅ Connection test successful');
-            return data;
+            // Quiz navigation
+            document.getElementById('prevBtn').addEventListener('click', previousQuestion);
+            document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+            document.getElementById('markBtn').addEventListener('click', toggleMark);
+            document.getElementById('finishBtn').addEventListener('click', finishExam);
         }
 
-        // Data Loading Functions
-        async function loadStudentsData() {
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            console.log('Login attempt:', { userId, password: '***' });
+            
+            // Show loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Memuat...';
+            submitBtn.disabled = true;
+
             try {
-                console.log('📚 Loading students data...');
+                let user = null;
                 
-                const response = await fetch(systemConfig.appsScriptUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        action: 'getStudents',
-                        spreadsheetId: systemConfig.spreadsheetId
-                    })
-                });
-                
-                console.log('📚 Students response status:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                console.log('📚 Students response data:', data);
-                
-                if (data.success && data.students) {
-                    window.studentsData = data.students;
-                    console.log('✅ Students data loaded successfully:', data.students.length, 'students');
-                } else {
-                    throw new Error(data.error || 'Failed to load students data');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error loading students data:', error);
-                throw error;
-            }
-        }
-
-        async function loadExamsData() {
-            try {
-                console.log('📝 Loading exams data...');
-                
-                const response = await fetch(systemConfig.appsScriptUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        action: 'getActiveExams',
-                        spreadsheetId: systemConfig.spreadsheetId
-                    })
-                });
-                
-                console.log('📝 Exams response status:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                console.log('📝 Exams response data:', data);
-                
-                if (data.success && data.exams) {
-                    window.sampleExams = data.exams;
-                    console.log('✅ Exams data loaded successfully:', data.exams.length, 'exams');
-                } else {
-                    throw new Error(data.error || 'Failed to load exams data');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error loading exams data:', error);
-                throw error;
-            }
-        }
-
-        async function loadSettingsData() {
-            try {
-                console.log('⚙️ Loading settings data...');
-                
-                const response = await fetch(systemConfig.appsScriptUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        action: 'getSettings',
-                        spreadsheetId: systemConfig.spreadsheetId
-                    })
-                });
-                
-                console.log('⚙️ Settings response status:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                console.log('⚙️ Settings response data:', data);
-                
-                if (data.success && data.settings) {
-                    window.examSettings = data.settings;
-                    console.log('✅ Settings data loaded successfully:', data.settings);
-                    
-                    // Update app title and subtitle - will use active exam data if available
-                    updateAppTitle(data.settings);
-                    
-                } else {
-                    throw new Error(data.error || 'Failed to load settings data');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error loading settings data:', error);
-                throw error;
-            }
-        }
-
-        function updateAppTitle(settings) {
-            // Try to get title from active exams first
-            if (window.sampleExams && window.sampleExams.length > 0) {
-                const activeExam = window.sampleExams.find(exam => exam.status === 'aktif') || window.sampleExams[0];
-                
-                // App title from namaUjian + mapel
-                const appTitle = `${activeExam.namaUjian} - ${activeExam.mapel}`;
-                document.getElementById('exam-title').textContent = appTitle;
-                console.log('App title updated from active exam:', appTitle);
-                
-                // Subtitle from materi
-                document.getElementById('exam-subtitle').textContent = activeExam.materi;
-                console.log('App subtitle updated from active exam:', activeExam.materi);
-                
-                return; // Exit early since we found active exam data
-            }
-            
-            // Fallback to Settings sheet if available
-            if (settings.appTitle) {
-                document.getElementById('exam-title').textContent = settings.appTitle;
-                console.log('App title updated from settings:', settings.appTitle);
-            }
-            
-            if (settings.appSubtitle) {
-                document.getElementById('exam-subtitle').textContent = settings.appSubtitle;
-                console.log('App subtitle updated from settings:', settings.appSubtitle);
-            }
-        }
-
-        async function loadQuestionsData(examId) {
-            try {
-                const response = await fetch(systemConfig.appsScriptUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        action: 'getQuestions',
-                        spreadsheetId: systemConfig.spreadsheetId,
-                        examId: examId
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                
-                const data = await response.json();
-                
-                if (data.success && data.questions) {
-                    allQuestions = data.questions;
-                    
-                    // Get exam settings from loaded data
-                    if (window.examSettings && window.examSettings[examId]) {
-                        currentExam = window.examSettings[examId];
+                // Try Google Sheets API first (database priority)
+                console.log('Connecting to Google Sheets database...');
+                try {
+                    user = await authenticateUser(userId, password);
+                    if (user) {
+                        console.log('Database authentication successful');
+                        currentUser = user;
+                        await loadExamData();
+                        showQuizInterface();
+                        return;
                     }
-                    
-                    // Set timer based on exam settings
-                    timeLeft = (currentExam.waktuMenit || 30) * 60;
-                    
-                    // Initialize user answers array
-                    userAnswers = new Array(allQuestions.length).fill(null);
-                    
-                    console.log('Questions loaded successfully:', allQuestions.length, 'questions');
-                } else {
-                    throw new Error(data.error || 'Failed to load questions');
-                }
-                
-            } catch (error) {
-                console.error('Error loading questions:', error);
-                throw error;
-            }
-        }
-
-        // Login Functions
-        async function loginStudent() {
-            const studentId = document.getElementById('login-student-id').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-            
-            if (!studentId || !password) {
-                showLoginError('Harap isi No. Induk dan Password');
-                return;
-            }
-            
-            showLoading('Memverifikasi login...');
-            
-            try {
-                // Ensure studentsData is available
-                if (!window.studentsData || !Array.isArray(window.studentsData)) {
-                    throw new Error('Data siswa belum dimuat');
-                }
-                
-                // Find student in loaded data
-                const student = window.studentsData.find(s => 
-                    s.noInduk === studentId && s.password === password && s.status === 'aktif'
-                );
-                
-                if (!student) {
-                    hideLoading();
-                    showLoginError('No. Induk atau Password salah');
+                } catch (apiError) {
+                    console.log('Database connection failed:', apiError.message);
+                    showError('Gagal terhubung ke database. Periksa koneksi internet Anda.');
                     return;
                 }
                 
-                currentStudent = student;
-                hideLoading();
-                
-                // Show exam selection screen
-                showExamSelection();
-                
+                // Only check demo as absolute fallback if database completely fails
+                const demoUser = SAMPLE_DATA.students.find(s => s.userId === userId && s.password === password);
+                if (demoUser && userId === 'demo' && password === 'demo') {
+                    console.log('Using demo fallback due to database failure');
+                    currentUser = demoUser;
+                    currentExam = SAMPLE_DATA.exam;
+                    questions = SAMPLE_DATA.questions;
+                    shuffledQuestions = shuffleQuestionsByType(questions);
+                    timeRemaining = currentExam.duration * 60;
+                    showQuizInterface();
+                } else {
+                    console.log('Authentication failed for:', userId);
+                    showError('User ID atau Password tidak ditemukan di database.\n\nPastikan kredensial Anda sudah terdaftar di Google Sheets.');
+                }
             } catch (error) {
-                hideLoading();
-                showLoginError('Terjadi kesalahan saat login: ' + error.message);
+                console.error('Login error:', error);
+                showError('Terjadi kesalahan sistem. Pastikan:\n1. Koneksi internet stabil\n2. Apps Script sudah di-deploy\n3. Permissions sudah diset ke "Anyone"\n4. Database sudah disetup dengan setupDatabase()');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
             }
         }
 
-        async function showExamSelection() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('exam-selection-screen').classList.remove('hidden');
-            
-            // Display student name
-            document.getElementById('student-name-display').textContent = currentStudent.nama;
-            
-            showLoading('Memuat ujian yang tersedia...');
-            
+        async function authenticateUser(userId, password) {
             try {
-                // Use sample exams for demo
-                const activeExams = window.sampleExams.filter(exam => {
-                    const allowedClasses = exam.kelas.split(',').map(k => k.trim());
-                    return allowedClasses.includes(currentStudent.kelas) && exam.status === 'aktif';
+                console.log('Attempting authentication for:', userId);
+                
+                const requestData = {
+                    action: 'authenticate',
+                    userId: userId,
+                    password: password
+                };
+                
+                console.log('Sending request:', requestData);
+                
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
                 });
                 
-                hideLoading();
-                displayAvailableExams(activeExams);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
                 
-            } catch (error) {
-                hideLoading();
-                alert('Gagal memuat ujian: ' + error.message);
-            }
-        }
-
-        async function displayAvailableExams(exams) {
-            const container = document.getElementById('available-exams');
-            const noExamsDiv = document.getElementById('no-exams');
-            
-            if (exams.length === 0) {
-                container.classList.add('hidden');
-                noExamsDiv.classList.remove('hidden');
-                return;
-            }
-            
-            container.classList.remove('hidden');
-            noExamsDiv.classList.add('hidden');
-            
-            let html = '';
-            
-            for (const exam of exams) {
-                // Check if student has already completed this exam
-                const hasCompleted = await checkQuizCompletion(currentStudent.noInduk, exam.ujianId);
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
                 
-                const startTime = new Date(exam.tanggalMulai).toLocaleString('id-ID');
-                const endTime = new Date(exam.tanggalSelesai).toLocaleString('id-ID');
-                
-                html += `
-                    <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <h3 class="text-xl font-semibold text-gray-800 mb-2">${exam.namaUjian}</h3>
-                                <div class="space-y-2 text-sm text-gray-600">
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253z"></path>
-                                        </svg>
-                                        <span><strong>Mata Pelajaran:</strong> ${exam.mapel}</span>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                        </svg>
-                                        <span><strong>Kelas:</strong> ${exam.kelas}</span>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                        <span><strong>Materi:</strong> ${exam.materi}</span>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <span><strong>Waktu:</strong> ${exam.waktuMenit} menit</span>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
-                                        <span><strong>Periode:</strong> ${startTime} - ${endTime}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="ml-6">
-                                ${hasCompleted ? 
-                                    `<div class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium">
-                                        ✅ Sudah Dikerjakan
-                                    </div>` :
-                                    `<button onclick="startExam('${exam.ujianId}')" 
-                                            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                                        🚀 Mulai Ujian
-                                    </button>`
-                                }
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            container.innerHTML = html;
-        }
-
-        async function startExam(examId) {
-            showLoading('Memuat soal ujian...');
-            
-            try {
-                // Try to load questions from Google Sheets first
+                let result;
                 try {
-                    await loadQuestionsData(examId);
-                } catch (error) {
-                    console.warn('Failed to load from Google Sheets, using demo data:', error);
-                    
-                    // Fallback to demo data
-                    currentExam = window.sampleExams.find(exam => exam.ujianId === examId);
-                    if (!currentExam) {
-                        throw new Error('Ujian tidak ditemukan');
-                    }
-                    
-                    allQuestions = window.sampleQuestions[examId] || [];
-                    
-                    if (allQuestions.length === 0) {
-                        throw new Error('Tidak ada soal yang tersedia untuk ujian ini');
-                    }
-                    
-                    // Set timer based on exam settings
-                    timeLeft = (currentExam.waktuMenit || 30) * 60;
-                    
-                    // Initialize user answers array
-                    userAnswers = new Array(allQuestions.length).fill(null);
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    console.log('Response was not valid JSON:', responseText);
+                    throw new Error('Server returned invalid response');
                 }
                 
-                // Update header with exam information
-                updateExamHeader(examId);
+                console.log('Parsed result:', result);
                 
-                hideLoading();
-                startQuiz();
-                
+                if (result.success) {
+                    console.log('Authentication successful:', result.data);
+                    return result.data;
+                } else {
+                    console.log('Authentication failed:', result.message);
+                    return null;
+                }
             } catch (error) {
-                hideLoading();
-                alert('Gagal memuat soal: ' + error.message);
+                console.error('Authentication API error:', error);
+                throw error;
             }
         }
 
-        function updateExamHeader(examId) {
-            const settings = window.examSettings[examId];
-            if (settings) {
-                const titleElement = document.getElementById('exam-title');
-                const subtitleElement = document.getElementById('exam-subtitle');
-                
-                titleElement.textContent = `${settings.namaUjian} - ${settings.mapel} - ${settings.kelas}`;
-                subtitleElement.textContent = settings.materi;
-            }
-        }
-
-        function refreshExams() {
-            showExamSelection();
-        }
-
-        function logoutStudent() {
-            currentStudent = null;
-            currentExam = null;
-            document.getElementById('exam-selection-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-            
-            // Clear form
-            document.getElementById('login-student-id').value = '';
-            document.getElementById('login-password').value = '';
-        }
-
-        function showLoginError(message) {
-            const errorDiv = document.getElementById('login-error');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-            
-            setTimeout(() => {
-                errorDiv.classList.add('hidden');
-            }, 5000);
-        }
-
-        async function checkQuizCompletion(studentId, examId) {
+        async function loadExamData() {
             try {
-                // For demo, check localStorage for completed exams
-                const completedExams = JSON.parse(localStorage.getItem('completedExams') || '[]');
-                const key = `${studentId}_${examId}`;
-                return completedExams.includes(key);
+                console.log('Loading exam data for user:', currentUser.userId);
+                
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getExamData',
+                        userId: currentUser.userId
+                    })
+                });
+                
+                const responseText = await response.text();
+                console.log('Exam data response:', responseText);
+                
+                const result = JSON.parse(responseText);
+                
+                if (result.success) {
+                    currentExam = result.data.exam;
+                    questions = result.data.questions;
+                    
+                    console.log('Loaded exam:', currentExam);
+                    console.log('Loaded questions:', questions.length);
+                    
+                    // Shuffle questions while maintaining type order
+                    shuffledQuestions = shuffleQuestionsByType(questions);
+                    timeRemaining = currentExam.duration * 60; // Convert to seconds
+                } else {
+                    throw new Error(result.message);
+                }
             } catch (error) {
-                console.error('Error checking completion:', error);
-                return false;
+                console.error('Load exam data API error:', error);
+                console.log('Falling back to demo data...');
+                
+                // Fallback to demo data
+                currentExam = SAMPLE_DATA.exam;
+                questions = SAMPLE_DATA.questions;
+                shuffledQuestions = shuffleQuestionsByType(questions);
+                timeRemaining = currentExam.duration * 60;
             }
         }
 
-        // Quiz Functions
-        function startQuiz() {
-            document.getElementById('exam-selection-screen').classList.add('hidden');
-            document.getElementById('quiz-screen').classList.remove('hidden');
+        function shuffleQuestionsByType(questions) {
+            // Group questions by type
+            const questionsByType = {};
+            questions.forEach(q => {
+                if (!questionsByType[q.type]) {
+                    questionsByType[q.type] = [];
+                }
+                questionsByType[q.type].push(q);
+            });
+
+            // Shuffle within each type and combine
+            let shuffled = [];
+            Object.keys(questionsByType).forEach(type => {
+                const typeQuestions = questionsByType[type];
+                // Shuffle array
+                for (let i = typeQuestions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [typeQuestions[i], typeQuestions[j]] = [typeQuestions[j], typeQuestions[i]];
+                }
+                shuffled = shuffled.concat(typeQuestions);
+            });
+
+            // Shuffle options for each question
+            shuffled.forEach(q => {
+                const options = [
+                    { key: 'A', text: q.optionA },
+                    { key: 'B', text: q.optionB },
+                    { key: 'C', text: q.optionC },
+                    { key: 'D', text: q.optionD }
+                ];
+                
+                // Shuffle options
+                for (let i = options.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [options[i], options[j]] = [options[j], options[i]];
+                }
+                
+                q.shuffledOptions = options;
+            });
+
+            return shuffled;
+        }
+
+        function showQuizInterface() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('quizInterface').classList.remove('hidden');
             
-            // Update progress text
-            document.getElementById('progress-text').textContent = `0 dari ${allQuestions.length} soal`;
+            // Set exam info
+            document.getElementById('examTitle').textContent = 
+                `${currentExam.name} - ${currentExam.subject} - ${currentExam.class}`;
+            document.getElementById('examSubtitle').textContent = currentExam.material;
             
+            // Start timer
             startTimer();
-            displayQuestion();
+            
+            // Show first question
+            showQuestion(0);
         }
 
         function startTimer() {
-            timerInterval = setInterval(() => {
-                timeLeft--;
+            examTimer = setInterval(() => {
+                timeRemaining--;
                 updateTimerDisplay();
                 
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    finishQuiz();
+                if (timeRemaining <= 0) {
+                    clearInterval(examTimer);
+                    finishExam();
                 }
             }, 1000);
         }
 
         function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
             document.getElementById('timer').textContent = 
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
-        function displayQuestion() {
-            const question = allQuestions[currentQuestionIndex];
-            const container = document.getElementById('question-container');
+        function showQuestion(index) {
+            if (index < 0 || index >= shuffledQuestions.length) return;
             
-            let html = `
-                <div class="mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                            ${getQuestionTypeLabel(question.type)}
-                        </span>
-                        <span class="text-gray-500 text-sm">
-                            Soal ${currentQuestionIndex + 1} dari ${allQuestions.length}
-                        </span>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-6">${question.question}</h3>
-                </div>
-            `;
-
-            switch (question.type) {
-                case 'multipleChoice':
-                    html += renderMultipleChoice(question);
-                    break;
-                case 'multipleChoiceComplex':
-                    html += renderMultipleChoiceComplex(question);
-                    break;
-                case 'matching':
-                    html += renderMatching(question);
-                    break;
-                case 'fillInBlank':
-                    html += renderFillInBlank(question);
-                    break;
-            }
-
-            container.innerHTML = html;
-            updateProgress();
-            updateNavigationButtons();
-        }
-
-        function getQuestionTypeLabel(type) {
-            const labels = {
-                'multipleChoice': 'Pilihan Ganda',
-                'multipleChoiceComplex': 'Pilihan Ganda Kompleks',
-                'matching': 'Menjodohkan',
-                'fillInBlank': 'Isian Singkat'
-            };
-            return labels[type];
-        }
-
-        function renderMultipleChoice(question) {
-            let html = '<div class="space-y-3">';
-            question.options.forEach((option, index) => {
-                const isSelected = userAnswers[currentQuestionIndex] === index;
-                html += `
-                    <button onclick="selectMultipleChoice(${index})" 
-                            class="option-button w-full text-left p-4 border-2 rounded-lg transition-all ${
-                                isSelected ? 'selected text-white border-blue-500' : 'border-gray-200 hover:border-blue-300'
-                            }">
-                        <span class="font-medium">${String.fromCharCode(97 + index)}.</span> ${option}
-                    </button>
-                `;
-            });
-            html += '</div>';
-            return html;
-        }
-
-        function renderMultipleChoiceComplex(question) {
-            let html = '<div class="space-y-3">';
-            html += '<p class="text-sm text-blue-600 font-medium mb-4">💡 Anda dapat memilih lebih dari satu jawaban!</p>';
+            currentQuestionIndex = index;
+            const question = shuffledQuestions[index];
             
-            question.options.forEach((option, index) => {
-                const isSelected = userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].includes(index);
-                html += `
-                    <button onclick="toggleMultipleChoiceComplex(${index})" 
-                            class="option-button w-full text-left p-4 border-2 rounded-lg transition-all ${
-                                isSelected ? 'selected text-white border-blue-500' : 'border-gray-200 hover:border-blue-300'
-                            }">
-                        <span class="font-medium">${String.fromCharCode(97 + index)}.</span> ${option}
-                    </button>
-                `;
-            });
-            html += '</div>';
-            return html;
-        }
-
-        function renderMatching(question) {
-            let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+            // Update question info
+            document.getElementById('questionType').textContent = question.type;
+            document.getElementById('questionNumber').textContent = `Soal ${index + 1}`;
+            document.getElementById('questionText').textContent = question.question;
             
-            // Left column
-            html += '<div class="space-y-3">';
-            html += '<h4 class="font-semibold text-gray-700 mb-3">Pernyataan:</h4>';
-            question.leftItems.forEach((item, index) => {
-                html += `
-                    <div class="p-3 bg-blue-50 rounded-lg border">
-                        <span class="font-medium text-blue-800">${index + 1}.</span> ${item}
-                    </div>
-                `;
-            });
-            html += '</div>';
-
-            // Right column
-            html += '<div class="space-y-3">';
-            html += '<h4 class="font-semibold text-gray-700 mb-3">Pilihan Jawaban:</h4>';
-            question.rightItems.forEach((item, index) => {
-                html += `
-                    <div class="p-3 bg-gray-50 rounded-lg border">
-                        <span class="font-medium text-gray-800">${String.fromCharCode(97 + index)}.</span> ${item}
-                    </div>
-                `;
-            });
-            html += '</div>';
-            html += '</div>';
-
-            // Matching inputs
-            html += '<div class="mt-6">';
-            html += '<h4 class="font-semibold text-gray-700 mb-3">Jawaban Anda:</h4>';
-            html += '<div class="grid grid-cols-1 md:grid-cols-5 gap-4">';
+            // Update counter and progress
+            document.getElementById('questionCounter').textContent = `${index + 1}/${shuffledQuestions.length}`;
+            const progress = ((index + 1) / shuffledQuestions.length) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${Math.round(progress)}%`;
             
-            question.leftItems.forEach((_, index) => {
-                const currentAnswer = userAnswers[currentQuestionIndex] ? userAnswers[currentQuestionIndex][index] : '';
-                html += `
-                    <div class="text-center">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">${index + 1}</label>
-                        <select onchange="updateMatching(${index}, this.value)" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">Pilih...</option>
-                            ${question.rightItems.map((_, i) => 
-                                `<option value="${i}" ${currentAnswer == i ? 'selected' : ''}>${String.fromCharCode(97 + i)}</option>`
-                            ).join('')}
-                        </select>
-                    </div>
-                `;
-            });
-            html += '</div></div>';
+            // Show options
+            showOptions(question);
             
-            return html;
-        }
-
-        function renderFillInBlank(question) {
-            const currentAnswer = userAnswers[currentQuestionIndex] || '';
-            return `
-                <div class="space-y-4">
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                        <p class="text-sm text-yellow-800">💡 Isilah dengan jawaban yang tepat dan singkat!</p>
-                    </div>
-                    <input type="text" 
-                           value="${currentAnswer}"
-                           onchange="updateFillInBlank(this.value)"
-                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                           placeholder="Ketik jawaban Anda di sini...">
-                </div>
-            `;
-        }
-
-        // Answer handling functions
-        function selectMultipleChoice(optionIndex) {
-            userAnswers[currentQuestionIndex] = optionIndex;
-            displayQuestion();
-        }
-
-        function toggleMultipleChoiceComplex(optionIndex) {
-            if (!userAnswers[currentQuestionIndex]) {
-                userAnswers[currentQuestionIndex] = [];
-            }
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').classList.toggle('hidden', index === shuffledQuestions.length - 1);
+            document.getElementById('finishBtn').classList.toggle('hidden', index !== shuffledQuestions.length - 1);
             
-            const answers = userAnswers[currentQuestionIndex];
-            const index = answers.indexOf(optionIndex);
-            
-            if (index > -1) {
-                answers.splice(index, 1);
+            // Update mark button
+            const markBtn = document.getElementById('markBtn');
+            if (markedQuestions.has(question.id)) {
+                markBtn.textContent = '🏷️ Ditandai';
+                markBtn.classList.add('bg-yellow-600');
             } else {
-                answers.push(optionIndex);
+                markBtn.textContent = '🏷️ Tandai';
+                markBtn.classList.remove('bg-yellow-600');
+            }
+        }
+
+        function showOptions(question) {
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+            
+            // Add instruction for PJ type
+            if (question.type === 'PJ') {
+                const instruction = document.createElement('div');
+                instruction.className = 'mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg';
+                instruction.innerHTML = `
+                    <div class="flex items-center text-yellow-800">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="font-medium">Pilihan Jamak: Anda dapat memilih lebih dari satu jawaban</span>
+                    </div>
+                `;
+                container.appendChild(instruction);
             }
             
-            displayQuestion();
+            question.shuffledOptions.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option-hover cursor-pointer p-4 border-2 border-gray-200 rounded-lg transition-all duration-200 hover:border-primary hover:bg-blue-50';
+                
+                let isSelected = false;
+                if (question.type === 'PG') {
+                    isSelected = userAnswers[question.id] === option.key;
+                } else if (question.type === 'PJ') {
+                    const selectedAnswers = userAnswers[question.id] ? userAnswers[question.id].split(',') : [];
+                    isSelected = selectedAnswers.includes(option.key);
+                }
+                
+                if (isSelected) {
+                    optionDiv.classList.add('border-primary', 'bg-blue-50');
+                }
+                
+                const inputType = question.type === 'PG' ? 'radio' : 'checkbox';
+                const inputShape = question.type === 'PG' ? 'rounded-full' : 'rounded';
+                
+                optionDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 ${inputShape} border-2 ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'} flex items-center justify-center mr-3">
+                            ${isSelected ? (question.type === 'PG' ? '<div class="w-3 h-3 bg-white rounded-full"></div>' : '<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>') : ''}
+                        </div>
+                        <span class="font-medium text-gray-700 mr-2">${option.key}.</span>
+                        <span class="text-gray-800">${option.text}</span>
+                    </div>
+                `;
+                
+                optionDiv.addEventListener('click', () => selectOption(question.id, option.key, question.type));
+                container.appendChild(optionDiv);
+            });
         }
 
-        function updateMatching(questionIndex, value) {
-            if (!userAnswers[currentQuestionIndex]) {
-                userAnswers[currentQuestionIndex] = new Array(allQuestions[currentQuestionIndex].leftItems.length).fill('');
+        function selectOption(questionId, optionKey, questionType) {
+            if (questionType === 'PG') {
+                userAnswers[questionId] = optionKey;
+            } else if (questionType === 'PJ') {
+                const currentAnswers = userAnswers[questionId] ? userAnswers[questionId].split(',') : [];
+                const index = currentAnswers.indexOf(optionKey);
+                
+                if (index > -1) {
+                    // Remove if already selected
+                    currentAnswers.splice(index, 1);
+                } else {
+                    // Add if not selected
+                    currentAnswers.push(optionKey);
+                }
+                
+                // Sort answers to maintain consistent order
+                currentAnswers.sort();
+                userAnswers[questionId] = currentAnswers.length > 0 ? currentAnswers.join(',') : '';
             }
-            userAnswers[currentQuestionIndex][questionIndex] = value;
+            
+            showQuestion(currentQuestionIndex); // Refresh to show selection
         }
 
-        function updateFillInBlank(value) {
-            userAnswers[currentQuestionIndex] = value.trim();
-        }
-
-        // Navigation functions
         function previousQuestion() {
             if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                displayQuestion();
+                showQuestion(currentQuestionIndex - 1);
             }
         }
 
         function nextQuestion() {
-            if (currentQuestionIndex < allQuestions.length - 1) {
-                currentQuestionIndex++;
-                displayQuestion();
+            if (currentQuestionIndex < shuffledQuestions.length - 1) {
+                showQuestion(currentQuestionIndex + 1);
             }
         }
 
-        function updateNavigationButtons() {
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            const finishBtn = document.getElementById('finish-btn');
-            
-            prevBtn.disabled = currentQuestionIndex === 0;
-            
-            if (currentQuestionIndex === allQuestions.length - 1) {
-                nextBtn.classList.add('hidden');
-                finishBtn.classList.remove('hidden');
+        function toggleMark() {
+            const question = shuffledQuestions[currentQuestionIndex];
+            if (markedQuestions.has(question.id)) {
+                markedQuestions.delete(question.id);
             } else {
-                nextBtn.classList.remove('hidden');
-                finishBtn.classList.add('hidden');
+                markedQuestions.add(question.id);
             }
+            showQuestion(currentQuestionIndex); // Refresh to show mark status
         }
 
-        function updateProgress() {
-            const answered = userAnswers.filter(answer => answer !== null && answer !== '' && answer !== undefined).length;
-            const percentage = (answered / allQuestions.length) * 100;
+        async function finishExam() {
+            if (examTimer) {
+                clearInterval(examTimer);
+            }
             
-            document.getElementById('progress-bar').style.width = `${percentage}%`;
-            document.getElementById('progress-text').textContent = `${answered} dari ${allQuestions.length} soal`;
-        }
-
-        function finishQuiz() {
-            clearInterval(timerInterval);
-            calculateResults();
-            showResults();
-        }
-
-        function calculateResults() {
+            // Calculate score based on points/scores
             let totalScore = 0;
-            let correctAnswers = 0;
-            let maxScore = 0;
-
-            allQuestions.forEach((question, index) => {
-                maxScore += question.points;
-                const userAnswer = userAnswers[index];
-                let isCorrect = false;
-
-                switch (question.type) {
-                    case 'multipleChoice':
-                        isCorrect = userAnswer === question.correct;
-                        break;
-                    case 'multipleChoiceComplex':
-                        if (userAnswer && Array.isArray(userAnswer) && Array.isArray(question.correct)) {
-                            const sortedUser = [...userAnswer].sort();
-                            const sortedCorrect = [...question.correct].sort();
-                            isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
-                        }
-                        break;
-                    case 'matching':
-                        if (userAnswer && Array.isArray(userAnswer)) {
-                            isCorrect = userAnswer.every((answer, i) => parseInt(answer) === question.correct[i]);
-                        }
-                        break;
-                    case 'fillInBlank':
-                        if (userAnswer && typeof userAnswer === 'string') {
-                            const normalizedAnswer = userAnswer.toLowerCase().trim();
-                            isCorrect = question.correct.some(correct => 
-                                correct.toLowerCase().trim() === normalizedAnswer
-                            );
-                        }
-                        break;
-                }
-
-                if (isCorrect) {
-                    totalScore += question.points;
-                    correctAnswers++;
-                }
-            });
-
-            window.quizResults = {
-                student: currentStudent,
-                totalScore,
-                maxScore,
-                correctAnswers,
-                totalQuestions: allQuestions.length,
-                percentage: Math.round((totalScore / maxScore) * 100),
-                timeSpent: 1800 - timeLeft,
-                answers: userAnswers,
-                questions: allQuestions,
-                timestamp: new Date().toISOString()
-            };
-        }
-
-        function showResults() {
-            document.getElementById('quiz-screen').classList.add('hidden');
-            document.getElementById('results-screen').classList.remove('hidden');
-
-            const results = window.quizResults;
+            let maxPossibleScore = 0;
             
-            // Update result display
-            document.getElementById('total-score').textContent = `${results.totalScore}/${results.maxScore}`;
-            document.getElementById('correct-answers').textContent = `${results.correctAnswers}/${results.totalQuestions}`;
-            document.getElementById('percentage').textContent = `${results.percentage}%`;
-
-            // Set result icon and message
-            const resultIcon = document.getElementById('result-icon');
-            const resultMessage = document.getElementById('result-message');
-            
-            if (results.percentage >= 80) {
-                resultIcon.className = 'w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center bg-green-100';
-                resultIcon.innerHTML = '<svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
-                resultMessage.textContent = `Excellent ${results.student.nama}! Pemahaman Anda tentang materi Infak sangat baik!`;
-            } else if (results.percentage >= 60) {
-                resultIcon.className = 'w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center bg-yellow-100';
-                resultIcon.innerHTML = '<svg class="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>';
-                resultMessage.textContent = `Good ${results.student.nama}! Anda sudah memahami sebagian besar materi, tingkatkan lagi ya!`;
-            } else {
-                resultIcon.className = 'w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center bg-red-100';
-                resultIcon.innerHTML = '<svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
-                resultMessage.textContent = `${results.student.nama}, perlu belajar lebih giat lagi. Jangan menyerah, terus semangat!`;
-            }
-
-            // Show detailed results
-            showDetailedResults();
-        }
-
-        function showDetailedResults() {
-            const results = window.quizResults;
-            const container = document.getElementById('detailed-results');
-            
-            let html = '<div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">';
-            
-            // Group by question type
-            const typeGroups = {
-                'multipleChoice': { name: 'Pilihan Ganda', questions: [] },
-                'multipleChoiceComplex': { name: 'Pilihan Ganda Kompleks', questions: [] },
-                'matching': { name: 'Menjodohkan', questions: [] },
-                'fillInBlank': { name: 'Isian Singkat', questions: [] }
-            };
-
-            results.questions.forEach((question, index) => {
-                const userAnswer = results.answers[index];
-                let isCorrect = false;
-
-                switch (question.type) {
-                    case 'multipleChoice':
-                        isCorrect = userAnswer === question.correct;
-                        break;
-                    case 'multipleChoiceComplex':
-                        if (userAnswer && Array.isArray(userAnswer)) {
-                            const sortedUser = [...userAnswer].sort();
-                            const sortedCorrect = [...question.correct].sort();
-                            isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
-                        }
-                        break;
-                    case 'matching':
-                        if (userAnswer && Array.isArray(userAnswer)) {
-                            isCorrect = userAnswer.every((answer, i) => parseInt(answer) === question.correct[i]);
-                        }
-                        break;
-                    case 'fillInBlank':
-                        if (userAnswer && typeof userAnswer === 'string') {
-                            const normalizedAnswer = userAnswer.toLowerCase().trim();
-                            isCorrect = question.correct.some(correct => 
-                                correct.toLowerCase().trim() === normalizedAnswer
-                            );
-                        }
-                        break;
-                }
-
-                typeGroups[question.type].questions.push({
-                    index: index + 1,
-                    isCorrect,
-                    points: question.points
-                });
-            });
-
-            Object.values(typeGroups).forEach(group => {
-                if (group.questions.length > 0) {
-                    const correct = group.questions.filter(q => q.isCorrect).length;
-                    const total = group.questions.length;
-                    const totalPoints = group.questions.reduce((sum, q) => sum + (q.isCorrect ? q.points : 0), 0);
-                    const maxPoints = group.questions.reduce((sum, q) => sum + q.points, 0);
+            shuffledQuestions.forEach(question => {
+                maxPossibleScore += question.score;
+                
+                const userAnswer = userAnswers[question.id] || '';
+                const correctAnswer = question.key;
+                
+                if (question.type === 'PG') {
+                    // Single choice - full points if correct, 0 if wrong
+                    if (userAnswer === correctAnswer) {
+                        totalScore += question.score;
+                    }
+                } else if (question.type === 'PJ') {
+                    // Multiple choice - partial scoring
+                    const userAnswerArray = userAnswer ? userAnswer.split(',').sort() : [];
+                    const correctAnswerArray = correctAnswer.split(',').sort();
                     
-                    html += `
-                        <div class="bg-white p-4 rounded-lg border">
-                            <h4 class="font-semibold text-gray-800 mb-2">${group.name}</h4>
-                            <div class="text-gray-600">
-                                <div>Benar: ${correct}/${total}</div>
-                                <div>Poin: ${totalPoints}/${maxPoints}</div>
+                    if (userAnswerArray.length === 0) {
+                        // No answer given
+                        totalScore += 0;
+                    } else if (userAnswerArray.join(',') === correctAnswerArray.join(',')) {
+                        // Perfect match - full points
+                        totalScore += question.score;
+                    } else {
+                        // Partial scoring based on correct selections
+                        let correctSelections = 0;
+                        let incorrectSelections = 0;
+                        
+                        userAnswerArray.forEach(answer => {
+                            if (correctAnswerArray.includes(answer)) {
+                                correctSelections++;
+                            } else {
+                                incorrectSelections++;
+                            }
+                        });
+                        
+                        // Calculate partial score: (correct - incorrect) / total correct * full score
+                        const partialScore = Math.max(0, (correctSelections - incorrectSelections) / correctAnswerArray.length * question.score);
+                        totalScore += Math.round(partialScore);
+                    }
+                }
+            });
+            
+            const grade = Math.round((totalScore / maxPossibleScore) * 100);
+            
+            // Prepare response data in original order
+            const responseData = {
+                timestamp: new Date().toISOString(),
+                userId: currentUser.userId,
+                name: currentUser.name,
+                class: currentUser.class,
+                examId: currentExam.id,
+                examName: currentExam.name,
+                score: totalScore,
+                maxScore: maxPossibleScore,
+                grade: grade,
+                status: 'completed'
+            };
+            
+            // Add answers in original order (Q1-Q30)
+            for (let i = 1; i <= 30; i++) {
+                const originalQuestion = questions.find(q => q.id === i);
+                if (originalQuestion) {
+                    responseData[`Q${i}`] = userAnswers[originalQuestion.id] || '';
+                } else {
+                    responseData[`Q${i}`] = '';
+                }
+            }
+            
+            // Save to Google Sheets (demo - replace with actual API call)
+            await saveResponse(responseData);
+            
+            // Show results
+            showResults(responseData);
+        }
+
+        async function saveResponse(responseData) {
+            try {
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveResponse',
+                        responseData: responseData
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('Failed to save response:', result.message);
+                } else {
+                    console.log('Response saved successfully');
+                }
+            } catch (error) {
+                console.error('Save response API error:', error);
+            }
+        }
+
+        function showResults(responseData) {
+            document.getElementById('quizInterface').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            
+            // Display results
+            document.getElementById('finalScore').textContent = `${responseData.score}/${responseData.maxScore}`;
+            document.getElementById('finalGrade').textContent = responseData.grade;
+            document.getElementById('resultName').textContent = responseData.name;
+            document.getElementById('resultClass').textContent = responseData.class;
+            document.getElementById('resultExam').textContent = responseData.examName;
+            document.getElementById('resultTime').textContent = new Date().toLocaleString('id-ID');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Database connection test with detailed diagnostics
+        async function testDatabaseConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            
+            // Show testing status
+            statusDiv.className = 'bg-blue-50 border border-blue-200 rounded-lg p-4';
+            statusDiv.innerHTML = `
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    <div class="text-sm text-blue-800">
+                        <div class="font-medium">🔍 Menguji Koneksi Database...</div>
+                        <div>Mengirim request ke Apps Script...</div>
+                    </div>
+                </div>
+            `;
+            
+            try {
+                console.log('Testing database connection to:', CONFIG.WEB_APP_URL);
+                
+                const startTime = Date.now();
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'test' })
+                });
+                
+                const responseTime = Date.now() - startTime;
+                const responseText = await response.text();
+                
+                console.log('Response status:', response.status);
+                console.log('Response time:', responseTime + 'ms');
+                console.log('Response text:', responseText);
+                
+                if (response.ok) {
+                    // Success - database is working
+                    statusDiv.className = 'bg-green-50 border border-green-200 rounded-lg p-4';
+                    statusDiv.innerHTML = `
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <div class="text-sm text-green-800">
+                                <div class="font-medium">✅ Database Terhubung</div>
+                                <div>Response time: ${responseTime}ms | Status: ${response.status}</div>
                             </div>
                         </div>
                     `;
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${responseText}`);
                 }
-            });
-            
-            html += '</div>';
-            container.innerHTML = html;
-        }
-
-        async function saveResults() {
-            const results = window.quizResults;
-            
-            showLoading('Menyimpan hasil...');
-            
-            try {
-                // Try to save to Google Sheets first
-                try {
-                    const response = await fetch(systemConfig.appsScriptUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: new URLSearchParams({
-                            action: 'saveResults',
-                            spreadsheetId: systemConfig.spreadsheetId,
-                            timestamp: new Date().toLocaleString('id-ID'),
-                            ujianId: currentExam.ujianId,
-                            namaUjian: currentExam.namaUjian,
-                            noInduk: results.student.noInduk,
-                            nama: results.student.nama,
-                            kelas: results.student.kelas,
-                            totalSkor: results.totalScore,
-                            skorMaksimal: results.maxScore,
-                            persentase: results.percentage,
-                            jawabanBenar: results.correctAnswers,
-                            totalSoal: results.totalQuestions,
-                            waktuPengerjaan: Math.floor(results.timeSpent / 60) + ' menit ' + (results.timeSpent % 60) + ' detik',
-                            detailJawaban: JSON.stringify(results.answers)
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success) {
-                            console.log('Results saved to Google Sheets successfully');
-                        } else {
-                            throw new Error(data.error || 'Failed to save to Google Sheets');
-                        }
-                    } else {
-                        throw new Error('Network error');
-                    }
-                    
-                } catch (error) {
-                    console.warn('Failed to save to Google Sheets, saving locally:', error);
-                    
-                    // Fallback to localStorage
-                    const savedResults = JSON.parse(localStorage.getItem('examResults') || '[]');
-                    const resultData = {
-                        timestamp: new Date().toLocaleString('id-ID'),
-                        ujianId: currentExam.ujianId,
-                        namaUjian: currentExam.namaUjian,
-                        noInduk: results.student.noInduk,
-                        nama: results.student.nama,
-                        kelas: results.student.kelas,
-                        totalSkor: results.totalScore,
-                        skorMaksimal: results.maxScore,
-                        persentase: results.percentage,
-                        jawabanBenar: results.correctAnswers,
-                        totalSoal: results.totalQuestions,
-                        waktuPengerjaan: Math.floor(results.timeSpent / 60) + ' menit ' + (results.timeSpent % 60) + ' detik',
-                        detailJawaban: JSON.stringify(results.answers)
-                    };
-                    
-                    savedResults.push(resultData);
-                    localStorage.setItem('examResults', JSON.stringify(savedResults));
-                }
-                
-                // Mark exam as completed
-                const completedExams = JSON.parse(localStorage.getItem('completedExams') || '[]');
-                const key = `${results.student.noInduk}_${currentExam.ujianId}`;
-                if (!completedExams.includes(key)) {
-                    completedExams.push(key);
-                    localStorage.setItem('completedExams', JSON.stringify(completedExams));
-                }
-                
-                hideLoading();
-                alert(`✅ Hasil berhasil disimpan!\n\nUjian: ${currentExam.namaUjian}\nNama: ${results.student.nama}\nSkor: ${results.totalScore}/${results.maxScore} (${results.percentage}%)\n\nTerima kasih telah mengerjakan ujian!`);
                 
             } catch (error) {
-                hideLoading();
-                alert('❌ Gagal menyimpan hasil: ' + error.message);
+                console.error('Database connection failed:', error);
+                
+                // Show Apps Script setup instructions
+                statusDiv.className = 'bg-red-50 border border-red-200 rounded-lg p-4';
+                statusDiv.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                            </svg>
+                            <div class="text-sm text-red-800">
+                                <div class="font-medium">❌ Database Belum Terhubung</div>
+                                <div class="text-xs mt-1">Setup Apps Script diperlukan</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-100 rounded p-3">
+                            <div class="text-xs text-blue-900 font-medium mb-2">📋 Kode Apps Script Baru:</div>
+                            <div class="text-xs text-blue-800 bg-white p-2 rounded border font-mono overflow-x-auto">
+                                Lihat kode lengkap di bawah halaman ini ↓
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-100 rounded p-3">
+                            <div class="text-xs text-yellow-900 font-medium mb-1">💡 Sementara gunakan demo:</div>
+                            <div class="text-xs text-yellow-800">
+                                <strong>Username:</strong> demo<br>
+                                <strong>Password:</strong> demo
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                return false;
             }
         }
 
-        function restartQuiz() {
-            // Reset all variables
-            currentQuestionIndex = 0;
-            userAnswers = [];
-            timeLeft = 1800;
-            currentStudent = null;
-            currentExam = null;
-            
-            // Clear timer
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-            
-            // Reset displays
-            document.getElementById('login-student-id').value = '';
-            document.getElementById('login-password').value = '';
-            document.getElementById('timer').textContent = '30:00';
-            document.getElementById('progress-bar').style.width = '0%';
-            
-            // Reset header to default
-            document.getElementById('exam-title').textContent = 'Asesmen Online Fikih';
-            document.getElementById('exam-subtitle').textContent = 'Sistem Terintegrasi Google Sheets';
-            
-            // Show login screen
-            document.getElementById('results-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-        }
-
-
-
-        // Utility Functions
-        function showLoading(message) {
-            document.getElementById('loading-text').textContent = message;
-            document.getElementById('loading-overlay').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loading-overlay').classList.add('hidden');
-        }
-
-        // Initialize the system when page loads
+        // Show Apps Script code after page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-initialize system on page load
+            // Add Apps Script code display at bottom of page
             setTimeout(() => {
-                initializeSystem();
-            }, 2000); // 2 second delay to show loading screen
+                const appsScriptCode = document.createElement('div');
+                appsScriptCode.className = 'fixed bottom-4 right-4 max-w-md bg-white rounded-lg shadow-lg border p-4 z-50';
+                appsScriptCode.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-gray-800">📝 Apps Script Code</h3>
+                        <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">✕</button>
+                    </div>
+                    <div class="text-xs text-gray-600 mb-2">
+                        1. Buka <a href="https://script.google.com" target="_blank" class="text-blue-600 underline">script.google.com</a><br>
+                        2. Buat project baru<br>
+                        3. Paste kode di bawah<br>
+                        4. Deploy sebagai Web App<br>
+                        5. Set permission "Anyone"
+                    </div>
+                    <button onclick="showAppsScriptCode()" class="w-full bg-blue-600 text-white py-2 px-4 rounded text-sm hover:bg-blue-700">
+                        Tampilkan Kode Apps Script
+                    </button>
+                `;
+                document.body.appendChild(appsScriptCode);
+            }, 3000);
         });
+
+        function showAppsScriptCode() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = \`
+                <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold">📝 Kode Apps Script Lengkap</h2>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
+                        </div>
+                        
+                        <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                            <h3 class="font-semibold mb-2">🚀 Langkah Setup:</h3>
+                            <ol class="text-sm space-y-1 list-decimal list-inside">
+                                <li>Buka <a href="https://script.google.com" target="_blank" class="text-blue-600 underline">script.google.com</a></li>
+                                <li>Klik "New Project"</li>
+                                <li>Hapus kode default, paste kode di bawah</li>
+                                <li>Klik "Deploy" → "New Deployment"</li>
+                                <li>Type: "Web app", Execute as: "Me", Access: "Anyone"</li>
+                                <li>Copy Web App URL dan update CONFIG.WEB_APP_URL</li>
+                                <li>Jalankan function setupDatabase() sekali</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="copyAppsScriptCode()" class="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                📋 Copy
+                            </button>
+                            <pre class="bg-gray-900 text-green-400 p-4 rounded-lg text-xs overflow-x-auto" style="max-height: 400px;"><code id="appsScriptCodeContent">// ===== KODE APPS SCRIPT UNTUK UJIAN ONLINE =====
+// Paste kode ini ke Google Apps Script
+
+// KONFIGURASI - Ganti dengan Spreadsheet ID Anda
+const SPREADSHEET_ID = '1pNnWawe4AzQSkVVXVIpitUlCot-C5N9nisgovY5WWAk';
+
+/**
+ * Fungsi utama untuk menangani semua request dari web app
+ */
+function doPost(e) {
+  try {
+    // Set CORS headers
+    const output = ContentService.createTextOutput();
+    output.setMimeType(ContentService.MimeType.JSON);
+    
+    // Parse request data
+    let requestData;
+    try {
+      requestData = JSON.parse(e.postData.contents);
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError);
+      return output.setContent(JSON.stringify({
+        success: false,
+        message: 'Invalid JSON format'
+      }));
+    }
+    
+    console.log('Received request:', requestData);
+    
+    // Route berdasarkan action
+    let result;
+    switch (requestData.action) {
+      case 'test':
+        result = testConnection();
+        break;
+      case 'authenticate':
+        result = authenticateUser(requestData.userId, requestData.password);
+        break;
+      case 'getExamData':
+        result = getExamData(requestData.userId);
+        break;
+      case 'saveResponse':
+        result = saveResponse(requestData.responseData);
+        break;
+      default:
+        result = { success: false, message: 'Unknown action: ' + requestData.action };
+    }
+    
+    console.log('Sending response:', result);
+    return output.setContent(JSON.stringify(result));
+    
+  } catch (error) {
+    console.error('doPost Error:', error);
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      message: 'Server error: ' + error.message,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Test koneksi database
+ */
+function testConnection() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const timestamp = new Date().toISOString();
+    
+    return {
+      success: true,
+      message: 'Database connection successful',
+      timestamp: timestamp,
+      spreadsheetName: ss.getName()
+    };
+  } catch (error) {
+    console.error('Test connection error:', error);
+    return {
+      success: false,
+      message: 'Database connection failed: ' + error.message
+    };
+  }
+}
+
+/**
+ * Autentikasi user
+ */
+function authenticateUser(userId, password) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const studentsSheet = ss.getSheetByName('Students');
+    
+    if (!studentsSheet) {
+      return {
+        success: false,
+        message: 'Students sheet not found. Run setupDatabase() first.'
+      };
+    }
+    
+    const data = studentsSheet.getDataRange().getValues();
+    const headers = data[0];
+    
+    // Find user
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[0] === userId && row[1] === password) {
+        return {
+          success: true,
+          data: {
+            userId: row[0],
+            name: row[2],
+            class: row[3]
+          }
+        };
+      }
+    }
+    
+    return {
+      success: false,
+      message: 'Invalid credentials'
+    };
+    
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return {
+      success: false,
+      message: 'Authentication failed: ' + error.message
+    };
+  }
+}
+
+/**
+ * Ambil data ujian dan soal
+ */
+function getExamData(userId) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // Get exam info
+    const examSheet = ss.getSheetByName('Exam');
+    if (!examSheet) {
+      throw new Error('Exam sheet not found');
+    }
+    
+    const examData = examSheet.getDataRange().getValues();
+    const exam = {
+      id: examData[1][0],
+      name: examData[1][1],
+      subject: examData[1][2],
+      material: examData[1][3],
+      class: examData[1][4],
+      date: examData[1][5],
+      time: examData[1][6],
+      duration: examData[1][7],
+      status: examData[1][8]
+    };
+    
+    // Get questions
+    const questionsSheet = ss.getSheetByName('Questions');
+    if (!questionsSheet) {
+      throw new Error('Questions sheet not found');
+    }
+    
+    const questionsData = questionsSheet.getDataRange().getValues();
+    const questions = [];
+    
+    for (let i = 1; i < questionsData.length; i++) {
+      const row = questionsData[i];
+      if (row[0]) { // Skip empty rows
+        questions.push({
+          id: row[0],
+          examId: row[1],
+          type: row[2],
+          score: row[3],
+          question: row[4],
+          optionA: row[5],
+          optionB: row[6],
+          optionC: row[7],
+          optionD: row[8],
+          key: row[9]
+        });
+      }
+    }
+    
+    return {
+      success: true,
+      data: {
+        exam: exam,
+        questions: questions
+      }
+    };
+    
+  } catch (error) {
+    console.error('Get exam data error:', error);
+    return {
+      success: false,
+      message: 'Failed to load exam data: ' + error.message
+    };
+  }
+}
+
+/**
+ * Simpan jawaban ujian
+ */
+function saveResponse(responseData) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let responseSheet = ss.getSheetByName('Responses');
+    
+    // Create sheet if not exists
+    if (!responseSheet) {
+      responseSheet = ss.insertSheet('Responses');
+      
+      // Add headers
+      const headers = [
+        'Timestamp', 'UserId', 'Name', 'Class', 'ExamId', 'ExamName', 
+        'Score', 'MaxScore', 'Grade', 'Status'
+      ];
+      
+      // Add Q1-Q30 columns
+      for (let i = 1; i <= 30; i++) {
+        headers.push(\`Q\${i}\`);
+      }
+      
+      responseSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    }
+    
+    // Prepare row data
+    const rowData = [
+      responseData.timestamp,
+      responseData.userId,
+      responseData.name,
+      responseData.class,
+      responseData.examId,
+      responseData.examName,
+      responseData.score,
+      responseData.maxScore,
+      responseData.grade,
+      responseData.status
+    ];
+    
+    // Add answers Q1-Q30
+    for (let i = 1; i <= 30; i++) {
+      rowData.push(responseData[\`Q\${i}\`] || '');
+    }
+    
+    // Add to sheet
+    responseSheet.appendRow(rowData);
+    
+    return {
+      success: true,
+      message: 'Response saved successfully'
+    };
+    
+  } catch (error) {
+    console.error('Save response error:', error);
+    return {
+      success: false,
+      message: 'Failed to save response: ' + error.message
+    };
+  }
+}
+
+/**
+ * Setup database - Jalankan sekali untuk membuat struktur
+ */
+function setupDatabase() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // 1. Setup Students sheet
+    let studentsSheet = ss.getSheetByName('Students');
+    if (studentsSheet) {
+      ss.deleteSheet(studentsSheet);
+    }
+    studentsSheet = ss.insertSheet('Students');
+    
+    const studentsHeaders = ['UserId', 'Password', 'Name', 'Class'];
+    const studentsData = [
+      ['demo', 'demo', 'Demo User', 'XII IPA 1'],
+      ['siswa1', 'pass123', 'Ahmad Rizki', 'XII IPA 1'],
+      ['siswa2', 'pass123', 'Siti Nurhaliza', 'XII IPA 1'],
+      ['siswa3', 'pass123', 'Budi Santoso', 'XII IPA 2']
+    ];
+    
+    studentsSheet.getRange(1, 1, 1, studentsHeaders.length).setValues([studentsHeaders]);
+    studentsSheet.getRange(2, 1, studentsData.length, studentsData[0].length).setValues(studentsData);
+    
+    // 2. Setup Exam sheet
+    let examSheet = ss.getSheetByName('Exam');
+    if (examSheet) {
+      ss.deleteSheet(examSheet);
+    }
+    examSheet = ss.insertSheet('Exam');
+    
+    const examHeaders = ['Id', 'Name', 'Subject', 'Material', 'Class', 'Date', 'Time', 'Duration', 'Status'];
+    const examData = [
+      [1, 'Ujian Matematika Semester 1', 'Matematika', 'Integral dan Diferensial', 'XII IPA 1', '2024-01-15', '08:00', 90, 'active']
+    ];
+    
+    examSheet.getRange(1, 1, 1, examHeaders.length).setValues([examHeaders]);
+    examSheet.getRange(2, 1, examData.length, examData[0].length).setValues(examData);
+    
+    // 3. Setup Questions sheet
+    let questionsSheet = ss.getSheetByName('Questions');
+    if (questionsSheet) {
+      ss.deleteSheet(questionsSheet);
+    }
+    questionsSheet = ss.insertSheet('Questions');
+    
+    const questionsHeaders = ['Id', 'ExamId', 'Type', 'Score', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'Key'];
+    const questionsData = [
+      [1, 1, 'PG', 10, 'Hasil dari integral ∫2x dx adalah...', 'x² + C', '2x² + C', 'x²/2 + C', '2x + C', 'A'],
+      [2, 1, 'PG', 10, 'Turunan dari f(x) = 3x² + 2x - 1 adalah...', '6x + 2', '3x + 2', '6x - 1', '3x² + 2', 'A'],
+      [3, 1, 'PG', 10, 'Nilai limit dari lim(x→2) (x² - 4)/(x - 2) adalah...', '0', '2', '4', '∞', 'C'],
+      [4, 1, 'PG', 10, 'Hasil dari ∫(3x² + 2x) dx adalah...', 'x³ + x² + C', '6x + 2 + C', '3x³ + x² + C', 'x³ + 2x² + C', 'A'],
+      [5, 1, 'PJ', 15, 'Manakah dari berikut ini yang merupakan bilangan prima? (Pilih semua yang benar)', '17', '21', '23', '25', 'A,C'],
+      [6, 1, 'PJ', 20, 'Sifat-sifat fungsi kuadrat f(x) = ax² + bx + c dengan a > 0 adalah... (Pilih semua yang benar)', 'Grafik membuka ke atas', 'Memiliki nilai minimum', 'Grafik membuka ke bawah', 'Memiliki sumbu simetri', 'A,B,D']
+    ];
+    
+    questionsSheet.getRange(1, 1, 1, questionsHeaders.length).setValues([questionsHeaders]);
+    questionsSheet.getRange(2, 1, questionsData.length, questionsData[0].length).setValues(questionsData);
+    
+    console.log('Database setup completed successfully!');
+    return 'Database setup completed successfully!';
+    
+  } catch (error) {
+    console.error('Setup database error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fungsi untuk testing manual
+ */
+function testManual() {
+  console.log('=== TESTING APPS SCRIPT ===');
+  
+  // Test 1: Setup database
+  console.log('1. Testing setupDatabase...');
+  try {
+    setupDatabase();
+    console.log('✅ setupDatabase: SUCCESS');
+  } catch (error) {
+    console.log('❌ setupDatabase: FAILED -', error.message);
+    return;
+  }
+  
+  // Test 2: Test connection
+  console.log('2. Testing connection...');
+  const testResult = testConnection();
+  console.log('testConnection result:', testResult);
+  
+  // Test 3: Test authentication
+  console.log('3. Testing authentication...');
+  const authResult = authenticateUser('demo', 'demo');
+  console.log('authenticateUser result:', authResult);
+  
+  // Test 4: Test get exam data
+  console.log('4. Testing getExamData...');
+  const examResult = getExamData('demo');
+  console.log('getExamData result:', examResult);
+  
+  console.log('=== TESTING COMPLETED ===');
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            document.body.appendChild(modal);
+        }
+
+        function copyAppsScriptCode() {
+            const code = document.getElementById('appsScriptCodeContent').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ Kode Apps Script berhasil di-copy!\\n\\nSekarang:\\n1. Buka script.google.com\\n2. Buat project baru\\n3. Paste kode ini\\n4. Deploy sebagai Web App');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ Kode berhasil di-copy!');
+            });
+        }
+
+        // Additional utility functions for future enhancements
+        async function testConnection() {
+            return await testDatabaseConnection();
+        }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d5663bd04efe8a',t:'MTc1NDg5MDgzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d6346624769fc7',t:'MTc1NDg5OTI4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
