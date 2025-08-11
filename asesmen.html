@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asesmen Online Fikih - Sistem Terintegrasi Google Sheets</title>
+    <title>Asesmen Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -232,28 +232,33 @@
 
         // System Initialization - Auto Start
         async function initializeSystem() {
-            // Always initialize demo mode first
-            initializeDemoMode();
-            
             try {
-                // Try to load from Google Sheets first
+                // Load data from Google Sheets
                 await loadStudentsData();
                 await loadExamsData();
+                await loadSettingsData();
                 
                 console.log('Google Sheets connection successful');
                 
+                // Show login screen after successful loading
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                
             } catch (error) {
                 console.warn('Google Sheets connection failed, using demo mode:', error);
+                
+                // Initialize demo mode as fallback
+                initializeDemoMode();
                 
                 // Show demo mode notification
                 setTimeout(() => {
                     alert('🎮 Mode Demo Aktif!\n\nKoneksi ke Google Sheets gagal, menggunakan data demo.\n\n🔑 Login Demo:\n• No. Induk: 001, Password: test123 (Kelas 5A)\n• No. Induk: 002, Password: test456 (Kelas 5A)\n• No. Induk: 003, Password: test789 (Kelas 5B)');
                 }, 1000);
+                
+                // Show login screen
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
             }
-            
-            // Always show login screen after initialization
-            document.getElementById('loading-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
         }
 
         function initializeDemoMode() {
@@ -363,59 +368,152 @@
 
         // Data Loading Functions
         async function loadStudentsData() {
-            const formData = new FormData();
-            formData.append('action', 'getStudents');
-            formData.append('spreadsheetId', systemConfig.spreadsheetId);
-            
-            const response = await fetch(systemConfig.appsScriptUrl, {
-                method: 'POST',
-                body: formData,
-                mode: 'no-cors'
-            });
-            
-            // Since we're using no-cors, we can't read the response
-            // We'll assume success if no error is thrown
-            console.log('Students data request sent to Google Sheets');
+            try {
+                const response = await fetch(systemConfig.appsScriptUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'getStudents',
+                        spreadsheetId: systemConfig.spreadsheetId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.students) {
+                    window.studentsData = data.students;
+                    console.log('Students data loaded successfully:', data.students.length, 'students');
+                } else {
+                    throw new Error(data.error || 'Failed to load students data');
+                }
+                
+            } catch (error) {
+                console.error('Error loading students data:', error);
+                throw error;
+            }
         }
 
         async function loadExamsData() {
-            const formData = new FormData();
-            formData.append('action', 'getActiveExams');
-            formData.append('spreadsheetId', systemConfig.spreadsheetId);
-            
-            const response = await fetch(systemConfig.appsScriptUrl, {
-                method: 'POST',
-                body: formData,
-                mode: 'no-cors'
-            });
-            
-            // Since we're using no-cors, we can't read the response
-            // We'll assume success if no error is thrown
-            console.log('Exams data request sent to Google Sheets');
+            try {
+                const response = await fetch(systemConfig.appsScriptUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'getActiveExams',
+                        spreadsheetId: systemConfig.spreadsheetId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.exams) {
+                    window.sampleExams = data.exams;
+                    console.log('Exams data loaded successfully:', data.exams.length, 'exams');
+                } else {
+                    throw new Error(data.error || 'Failed to load exams data');
+                }
+                
+            } catch (error) {
+                console.error('Error loading exams data:', error);
+                throw error;
+            }
+        }
+
+        async function loadSettingsData() {
+            try {
+                const response = await fetch(systemConfig.appsScriptUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'getSettings',
+                        spreadsheetId: systemConfig.spreadsheetId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.settings) {
+                    window.examSettings = data.settings;
+                    console.log('Settings data loaded successfully');
+                    
+                    // Update app title if available
+                    if (data.settings.appTitle) {
+                        document.getElementById('exam-title').textContent = data.settings.appTitle;
+                    }
+                    if (data.settings.appSubtitle) {
+                        document.getElementById('exam-subtitle').textContent = data.settings.appSubtitle;
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to load settings data');
+                }
+                
+            } catch (error) {
+                console.error('Error loading settings data:', error);
+                throw error;
+            }
         }
 
         async function loadQuestionsData(examId) {
-            const response = await fetch(systemConfig.appsScriptUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: 'getQuestions',
-                    spreadsheetId: systemConfig.spreadsheetId,
-                    examId: examId
-                })
-            });
-            
-            if (!response.ok) throw new Error('Gagal memuat bank soal');
-            
-            const data = await response.json();
-            allQuestions = data.questions || [];
-            currentExam = data.examSettings;
-            
-            // Set timer based on exam settings
-            timeLeft = (currentExam.waktuMenit || 30) * 60;
-            
-            // Initialize user answers array
-            userAnswers = new Array(allQuestions.length).fill(null);
+            try {
+                const response = await fetch(systemConfig.appsScriptUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'getQuestions',
+                        spreadsheetId: systemConfig.spreadsheetId,
+                        examId: examId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.questions) {
+                    allQuestions = data.questions;
+                    
+                    // Get exam settings from loaded data
+                    if (window.examSettings && window.examSettings[examId]) {
+                        currentExam = window.examSettings[examId];
+                    }
+                    
+                    // Set timer based on exam settings
+                    timeLeft = (currentExam.waktuMenit || 30) * 60;
+                    
+                    // Initialize user answers array
+                    userAnswers = new Array(allQuestions.length).fill(null);
+                    
+                    console.log('Questions loaded successfully:', allQuestions.length, 'questions');
+                } else {
+                    throw new Error(data.error || 'Failed to load questions');
+                }
+                
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                throw error;
+            }
         }
 
         // Login Functions
@@ -567,26 +665,30 @@
             showLoading('Memuat soal ujian...');
             
             try {
-                // Get exam settings from sample data
-                currentExam = window.sampleExams.find(exam => exam.ujianId === examId);
-                if (!currentExam) {
-                    throw new Error('Ujian tidak ditemukan');
+                // Try to load questions from Google Sheets first
+                try {
+                    await loadQuestionsData(examId);
+                } catch (error) {
+                    console.warn('Failed to load from Google Sheets, using demo data:', error);
+                    
+                    // Fallback to demo data
+                    currentExam = window.sampleExams.find(exam => exam.ujianId === examId);
+                    if (!currentExam) {
+                        throw new Error('Ujian tidak ditemukan');
+                    }
+                    
+                    allQuestions = window.sampleQuestions[examId] || [];
+                    
+                    if (allQuestions.length === 0) {
+                        throw new Error('Tidak ada soal yang tersedia untuk ujian ini');
+                    }
+                    
+                    // Set timer based on exam settings
+                    timeLeft = (currentExam.waktuMenit || 30) * 60;
+                    
+                    // Initialize user answers array
+                    userAnswers = new Array(allQuestions.length).fill(null);
                 }
-                
-                // Get questions from sample data
-                allQuestions = window.sampleQuestions[examId] || [];
-                
-                if (allQuestions.length === 0) {
-                    hideLoading();
-                    alert('Tidak ada soal yang tersedia untuk ujian ini');
-                    return;
-                }
-                
-                // Set timer based on exam settings
-                timeLeft = (currentExam.waktuMenit || 30) * 60;
-                
-                // Initialize user answers array
-                userAnswers = new Array(allQuestions.length).fill(null);
                 
                 // Update header with exam information
                 updateExamHeader(examId);
@@ -1080,26 +1182,67 @@
             showLoading('Menyimpan hasil...');
             
             try {
-                // For demo, save to localStorage
-                const savedResults = JSON.parse(localStorage.getItem('examResults') || '[]');
-                const resultData = {
-                    timestamp: new Date().toLocaleString('id-ID'),
-                    ujianId: currentExam.ujianId,
-                    namaUjian: currentExam.namaUjian,
-                    noInduk: results.student.noInduk,
-                    nama: results.student.nama,
-                    kelas: results.student.kelas,
-                    totalSkor: results.totalScore,
-                    skorMaksimal: results.maxScore,
-                    persentase: results.percentage,
-                    jawabanBenar: results.correctAnswers,
-                    totalSoal: results.totalQuestions,
-                    waktuPengerjaan: Math.floor(results.timeSpent / 60) + ' menit ' + (results.timeSpent % 60) + ' detik',
-                    detailJawaban: JSON.stringify(results.answers)
-                };
-                
-                savedResults.push(resultData);
-                localStorage.setItem('examResults', JSON.stringify(savedResults));
+                // Try to save to Google Sheets first
+                try {
+                    const response = await fetch(systemConfig.appsScriptUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            action: 'saveResults',
+                            spreadsheetId: systemConfig.spreadsheetId,
+                            timestamp: new Date().toLocaleString('id-ID'),
+                            ujianId: currentExam.ujianId,
+                            namaUjian: currentExam.namaUjian,
+                            noInduk: results.student.noInduk,
+                            nama: results.student.nama,
+                            kelas: results.student.kelas,
+                            totalSkor: results.totalScore,
+                            skorMaksimal: results.maxScore,
+                            persentase: results.percentage,
+                            jawabanBenar: results.correctAnswers,
+                            totalSoal: results.totalQuestions,
+                            waktuPengerjaan: Math.floor(results.timeSpent / 60) + ' menit ' + (results.timeSpent % 60) + ' detik',
+                            detailJawaban: JSON.stringify(results.answers)
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            console.log('Results saved to Google Sheets successfully');
+                        } else {
+                            throw new Error(data.error || 'Failed to save to Google Sheets');
+                        }
+                    } else {
+                        throw new Error('Network error');
+                    }
+                    
+                } catch (error) {
+                    console.warn('Failed to save to Google Sheets, saving locally:', error);
+                    
+                    // Fallback to localStorage
+                    const savedResults = JSON.parse(localStorage.getItem('examResults') || '[]');
+                    const resultData = {
+                        timestamp: new Date().toLocaleString('id-ID'),
+                        ujianId: currentExam.ujianId,
+                        namaUjian: currentExam.namaUjian,
+                        noInduk: results.student.noInduk,
+                        nama: results.student.nama,
+                        kelas: results.student.kelas,
+                        totalSkor: results.totalScore,
+                        skorMaksimal: results.maxScore,
+                        persentase: results.percentage,
+                        jawabanBenar: results.correctAnswers,
+                        totalSoal: results.totalQuestions,
+                        waktuPengerjaan: Math.floor(results.timeSpent / 60) + ' menit ' + (results.timeSpent % 60) + ' detik',
+                        detailJawaban: JSON.stringify(results.answers)
+                    };
+                    
+                    savedResults.push(resultData);
+                    localStorage.setItem('examResults', JSON.stringify(savedResults));
+                }
                 
                 // Mark exam as completed
                 const completedExams = JSON.parse(localStorage.getItem('completedExams') || '[]');
@@ -1166,5 +1309,5 @@
             }, 2000); // 2 second delay to show loading screen
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d54daa25e2fe8a',t:'MTc1NDg4OTgzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d5568aa04dfe8a',t:'MTc1NDg5MDE5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
