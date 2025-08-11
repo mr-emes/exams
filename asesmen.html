@@ -61,9 +61,15 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Memuat Sistem Asesmen</h2>
                 <p class="text-gray-600 mb-4">Menghubungkan ke Google Sheets...</p>
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p class="text-sm text-blue-700">
+                    <p class="text-sm text-blue-700 mb-2">
                         <strong>📊 Spreadsheet ID:</strong> 1LXjILS4HLHFlbzl2aIYDrBLKM4D4bp2PUnJBgk81RqU
                     </p>
+                    <p class="text-sm text-blue-700">
+                        <strong>🔗 Apps Script URL:</strong> <span class="font-mono text-xs">AKfycbwJkSCNQCLERl0R01p5Jc59ehEVe2yQjd0EvrxbBRWmCFXip1JxzLsPf-3xPF_HSI71fg</span>
+                    </p>
+                </div>
+                <div id="connection-status" class="mt-4 p-3 rounded-lg text-sm text-center hidden">
+                    <span id="connection-message"></span>
                 </div>
             </div>
         </div>
@@ -232,27 +238,47 @@
 
         // System Initialization - Auto Start
         async function initializeSystem() {
+            console.log('🚀 Starting system initialization...');
+            console.log('📊 Apps Script URL:', systemConfig.appsScriptUrl);
+            console.log('📋 Spreadsheet ID:', systemConfig.spreadsheetId);
+            
             try {
+                // Test connection first
+                console.log('🔍 Testing Google Sheets connection...');
+                await testConnection();
+                
+                console.log('✅ Connection test passed, loading data...');
+                
                 // Load data from Google Sheets
                 await loadStudentsData();
                 await loadExamsData();
                 await loadSettingsData();
                 
-                console.log('Google Sheets connection successful');
+                console.log('✅ Google Sheets connection successful');
                 
                 // Show login screen after successful loading
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('login-screen').classList.remove('hidden');
                 
+                // Show success notification
+                setTimeout(() => {
+                    alert('✅ Koneksi Google Sheets Berhasil!\n\nSistem telah terhubung dengan database.\nSilakan login dengan akun Anda.');
+                }, 500);
+                
             } catch (error) {
-                console.warn('Google Sheets connection failed, using demo mode:', error);
+                console.error('❌ Google Sheets connection failed:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    url: systemConfig.appsScriptUrl
+                });
                 
                 // Initialize demo mode as fallback
                 initializeDemoMode();
                 
-                // Show demo mode notification
+                // Show detailed error notification
                 setTimeout(() => {
-                    alert('🎮 Mode Demo Aktif!\n\nKoneksi ke Google Sheets gagal, menggunakan data demo.\n\n🔑 Login Demo:\n• No. Induk: 001, Password: test123 (Kelas 5A)\n• No. Induk: 002, Password: test456 (Kelas 5A)\n• No. Induk: 003, Password: test789 (Kelas 5B)');
+                    alert(`❌ Koneksi Google Sheets Gagal!\n\nError: ${error.message}\n\n🎮 Mode Demo Aktif!\n\n🔑 Login Demo:\n• No. Induk: 001, Password: test123 (Kelas 5A)\n• No. Induk: 002, Password: test456 (Kelas 5A)\n• No. Induk: 003, Password: test789 (Kelas 5B)\n\n🔧 Periksa:\n1. Apps Script URL sudah benar?\n2. Spreadsheet ID sudah benar?\n3. Apps Script sudah di-deploy?`);
                 }, 1000);
                 
                 // Show login screen
@@ -394,9 +420,69 @@
 
 
 
+        // Connection Status Functions
+        function updateConnectionStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('connection-status');
+            const messageSpan = document.getElementById('connection-message');
+            
+            statusDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
+            
+            switch(type) {
+                case 'success':
+                    statusDiv.classList.add('bg-green-100', 'text-green-700');
+                    break;
+                case 'error':
+                    statusDiv.classList.add('bg-red-100', 'text-red-700');
+                    break;
+                default:
+                    statusDiv.classList.add('bg-blue-100', 'text-blue-700');
+            }
+            
+            messageSpan.textContent = message;
+        }
+
+        // Connection Test Function
+        async function testConnection() {
+            console.log('🔗 Testing connection to Apps Script...');
+            updateConnectionStatus('🔍 Testing connection...', 'info');
+            
+            const response = await fetch(systemConfig.appsScriptUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'test',
+                    spreadsheetId: systemConfig.spreadsheetId
+                })
+            });
+            
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response ok:', response.ok);
+            
+            if (!response.ok) {
+                updateConnectionStatus(`❌ HTTP Error: ${response.status} ${response.statusText}`, 'error');
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('📡 Response data:', data);
+            
+            if (!data.success) {
+                updateConnectionStatus(`❌ ${data.error || 'Connection test failed'}`, 'error');
+                throw new Error(data.error || 'Connection test failed');
+            }
+            
+            updateConnectionStatus('✅ Connection successful!', 'success');
+            console.log('✅ Connection test successful');
+            return data;
+        }
+
         // Data Loading Functions
         async function loadStudentsData() {
             try {
+                console.log('📚 Loading students data...');
+                
                 const response = await fetch(systemConfig.appsScriptUrl, {
                     method: 'POST',
                     headers: {
@@ -408,27 +494,32 @@
                     })
                 });
                 
+                console.log('📚 Students response status:', response.status);
+                
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const data = await response.json();
+                console.log('📚 Students response data:', data);
                 
                 if (data.success && data.students) {
                     window.studentsData = data.students;
-                    console.log('Students data loaded successfully:', data.students.length, 'students');
+                    console.log('✅ Students data loaded successfully:', data.students.length, 'students');
                 } else {
                     throw new Error(data.error || 'Failed to load students data');
                 }
                 
             } catch (error) {
-                console.error('Error loading students data:', error);
+                console.error('❌ Error loading students data:', error);
                 throw error;
             }
         }
 
         async function loadExamsData() {
             try {
+                console.log('📝 Loading exams data...');
+                
                 const response = await fetch(systemConfig.appsScriptUrl, {
                     method: 'POST',
                     headers: {
@@ -440,27 +531,32 @@
                     })
                 });
                 
+                console.log('📝 Exams response status:', response.status);
+                
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const data = await response.json();
+                console.log('📝 Exams response data:', data);
                 
                 if (data.success && data.exams) {
                     window.sampleExams = data.exams;
-                    console.log('Exams data loaded successfully:', data.exams.length, 'exams');
+                    console.log('✅ Exams data loaded successfully:', data.exams.length, 'exams');
                 } else {
                     throw new Error(data.error || 'Failed to load exams data');
                 }
                 
             } catch (error) {
-                console.error('Error loading exams data:', error);
+                console.error('❌ Error loading exams data:', error);
                 throw error;
             }
         }
 
         async function loadSettingsData() {
             try {
+                console.log('⚙️ Loading settings data...');
+                
                 const response = await fetch(systemConfig.appsScriptUrl, {
                     method: 'POST',
                     headers: {
@@ -472,15 +568,18 @@
                     })
                 });
                 
+                console.log('⚙️ Settings response status:', response.status);
+                
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const data = await response.json();
+                console.log('⚙️ Settings response data:', data);
                 
                 if (data.success && data.settings) {
                     window.examSettings = data.settings;
-                    console.log('Settings data loaded successfully:', data.settings);
+                    console.log('✅ Settings data loaded successfully:', data.settings);
                     
                     // Update app title and subtitle - will use active exam data if available
                     updateAppTitle(data.settings);
@@ -490,7 +589,7 @@
                 }
                 
             } catch (error) {
-                console.error('Error loading settings data:', error);
+                console.error('❌ Error loading settings data:', error);
                 throw error;
             }
         }
@@ -1362,5 +1461,5 @@
             }, 2000); // 2 second delay to show loading screen
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d55f99e103fe8a',t:'MTc1NDg5MDU2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d5663bd04efe8a',t:'MTc1NDg5MDgzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
