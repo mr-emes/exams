@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asesmen Online</title>
+    <title>Asesmen Online Fikih - Sistem Terintegrasi Google Sheets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -271,6 +271,34 @@
                 { noInduk: '002', nama: 'Siti Aminah', kelas: '5A', password: 'test456', status: 'aktif' },
                 { noInduk: '003', nama: 'Muhammad Ali', kelas: '5B', password: 'test789', status: 'aktif' }
             ];
+            
+            // Update title from demo settings
+            updateAppTitleFromDemo();
+        }
+
+        function updateAppTitleFromDemo() {
+            // Update title from demo active exams
+            if (window.sampleExams && window.sampleExams.length > 0) {
+                const activeExam = window.sampleExams.find(exam => exam.status === 'aktif') || window.sampleExams[0];
+                
+                // App title from namaUjian + mapel
+                const appTitle = `${activeExam.namaUjian} - ${activeExam.mapel}`;
+                document.getElementById('exam-title').textContent = appTitle;
+                
+                // Subtitle from materi
+                document.getElementById('exam-subtitle').textContent = activeExam.materi;
+                
+                console.log('Demo title updated from active exam:', appTitle, '|', activeExam.materi);
+            } else if (window.examSettings && Object.keys(window.examSettings).length > 0) {
+                const firstExamId = Object.keys(window.examSettings)[0];
+                const firstExam = window.examSettings[firstExamId];
+                
+                const appTitle = `${firstExam.namaUjian} - ${firstExam.mapel}`;
+                document.getElementById('exam-title').textContent = appTitle;
+                document.getElementById('exam-subtitle').textContent = firstExam.materi;
+                
+                console.log('Demo title updated from exam settings');
+            }
         }
 
         function initializeSampleQuestions() {
@@ -452,15 +480,11 @@
                 
                 if (data.success && data.settings) {
                     window.examSettings = data.settings;
-                    console.log('Settings data loaded successfully');
+                    console.log('Settings data loaded successfully:', data.settings);
                     
-                    // Update app title if available
-                    if (data.settings.appTitle) {
-                        document.getElementById('exam-title').textContent = data.settings.appTitle;
-                    }
-                    if (data.settings.appSubtitle) {
-                        document.getElementById('exam-subtitle').textContent = data.settings.appSubtitle;
-                    }
+                    // Update app title and subtitle - will use active exam data if available
+                    updateAppTitle(data.settings);
+                    
                 } else {
                     throw new Error(data.error || 'Failed to load settings data');
                 }
@@ -468,6 +492,35 @@
             } catch (error) {
                 console.error('Error loading settings data:', error);
                 throw error;
+            }
+        }
+
+        function updateAppTitle(settings) {
+            // Try to get title from active exams first
+            if (window.sampleExams && window.sampleExams.length > 0) {
+                const activeExam = window.sampleExams.find(exam => exam.status === 'aktif') || window.sampleExams[0];
+                
+                // App title from namaUjian + mapel
+                const appTitle = `${activeExam.namaUjian} - ${activeExam.mapel}`;
+                document.getElementById('exam-title').textContent = appTitle;
+                console.log('App title updated from active exam:', appTitle);
+                
+                // Subtitle from materi
+                document.getElementById('exam-subtitle').textContent = activeExam.materi;
+                console.log('App subtitle updated from active exam:', activeExam.materi);
+                
+                return; // Exit early since we found active exam data
+            }
+            
+            // Fallback to Settings sheet if available
+            if (settings.appTitle) {
+                document.getElementById('exam-title').textContent = settings.appTitle;
+                console.log('App title updated from settings:', settings.appTitle);
+            }
+            
+            if (settings.appSubtitle) {
+                document.getElementById('exam-subtitle').textContent = settings.appSubtitle;
+                console.log('App subtitle updated from settings:', settings.appSubtitle);
             }
         }
 
@@ -1309,5 +1362,5 @@
             }, 2000); // 2 second delay to show loading screen
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d5568aa04dfe8a',t:'MTc1NDg5MDE5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d55f99e103fe8a',t:'MTc1NDg5MDU2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
