@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Online - Hukum Bacaan Mim Mati</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        .arabic-text { font-family: 'Amiri', serif; font-size: 1.2em; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .pulse-animation { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Welcome Screen -->
+    <div id="welcomeScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl card-shadow p-8 max-w-md w-full text-center">
+            <div class="mb-6">
+                <div class="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <img src="https://i.imgur.com/0Laf7Zu.png" alt="Logo" class="w-20 h-20 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full hidden items-center justify-center">
+                        <span class="text-white text-2xl font-bold">📚</span>
+                    </div>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Kuis Online</h1>
+                <h2 class="text-lg font-semibold text-purple-600">Hukum Bacaan Mim Mati</h2>
+                <p class="text-gray-600 mt-2">20 Soal Pilihan Ganda</p>
+            </div>
+            
+            <div class="mb-6">
+                <input type="text" id="nisInput" placeholder="Masukkan NIS (Nomor Induk Siswa)" 
+                       class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-center font-medium"
+                       oninput="checkNIS()">
+                <div id="studentInfo" class="hidden mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="text-center">
+                        <div class="font-semibold text-green-800" id="studentName"></div>
+                        <div class="text-sm text-green-600" id="studentClass"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="startQuiz()" class="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-600 hover:to-blue-600 transition-all duration-300 pulse-animation">
+                Mulai Kuis
+            </button>
+            
+            <div class="mt-4 text-sm text-gray-500">
+                <p>⏱️ Waktu: 30 detik per soal</p>
+                <p>🏆 Skor maksimal: 2000 poin</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quizScreen" class="hidden min-h-screen p-4">
+        <!-- Header -->
+        <div class="bg-white rounded-xl card-shadow p-4 mb-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <div class="text-lg font-semibold text-gray-800">
+                        <span id="currentPlayer">Pemain</span>
+                    </div>
+                    <div class="bg-purple-100 px-3 py-1 rounded-full">
+                        <span class="text-purple-700 font-medium">Soal <span id="questionNumber">1</span>/20</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm text-gray-600">Skor</div>
+                        <div class="text-xl font-bold text-purple-600" id="currentScore">0</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-600">Waktu</div>
+                        <div class="text-xl font-bold text-red-500" id="timer">30</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="bg-white rounded-xl card-shadow p-6 mb-4">
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4" id="questionText">Loading...</h3>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300" id="progressBar" style="width: 5%"></div>
+                </div>
+            </div>
+            
+            <div class="space-y-3" id="answersContainer">
+                <!-- Answers will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="hidden min-h-screen p-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl card-shadow p-8 text-center mb-6">
+                <div class="mb-6">
+                    <div class="w-24 h-24 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <span class="text-white text-3xl">🏆</span>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Kuis Selesai!</h2>
+                    <p class="text-gray-600">Terima kasih telah mengikuti kuis</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-purple-600" id="finalScore">0</div>
+                        <div class="text-sm text-gray-600">Skor Akhir</div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600" id="correctAnswers">0</div>
+                        <div class="text-sm text-gray-600">Jawaban Benar</div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600" id="accuracy">0%</div>
+                        <div class="text-sm text-gray-600">Akurasi</div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="restartQuiz()" class="bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 px-8 rounded-lg font-semibold hover:from-purple-600 hover:to-blue-600 transition-all duration-300">
+                        Main Lagi
+                    </button>
+                    <button id="teacherDashboardBtn" onclick="showTeacherDashboard()" class="hidden bg-gradient-to-r from-green-500 to-teal-500 text-white py-3 px-8 rounded-lg font-semibold hover:from-green-600 hover:to-teal-600 transition-all duration-300">
+                        👨‍🏫 Dashboard Guru
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics Tabs -->
+            <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">🏆 Leaderboard</h3>
+                </div>
+
+                <!-- Leaderboard -->
+                <div id="leaderboardList" class="space-y-3">
+                    <!-- Leaderboard entries will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Dashboard Screen -->
+    <div id="teacherDashboard" class="hidden min-h-screen p-4">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">👨‍🏫 Dashboard Guru</h1>
+                        <p class="text-gray-600 mt-2">Kelola dan pantau hasil kuis siswa</p>
+                    </div>
+                    <button onclick="closeTeacherDashboard()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                        ← Kembali
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <button onclick="printAllResults()" class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg font-semibold transition-all duration-300">
+                        🖨️ Cetak Semua Hasil
+                    </button>
+                    <button onclick="exportToCSV()" class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-lg font-semibold transition-all duration-300">
+                        📊 Export ke CSV
+                    </button>
+                    <button onclick="clearAllData()" class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-lg font-semibold transition-all duration-300">
+                        🗑️ Hapus Semua Data
+                    </button>
+                    <button onclick="generateReport()" class="bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-lg font-semibold transition-all duration-300">
+                        📋 Buat Laporan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-xl card-shadow p-6 text-center">
+                    <div class="text-3xl font-bold text-blue-600" id="teacherTotalPlayers">0</div>
+                    <div class="text-gray-600">Total Siswa</div>
+                </div>
+                <div class="bg-white rounded-xl card-shadow p-6 text-center">
+                    <div class="text-3xl font-bold text-green-600" id="teacherCompletedQuiz">0</div>
+                    <div class="text-gray-600">Selesai Kuis</div>
+                </div>
+                <div class="bg-white rounded-xl card-shadow p-6 text-center">
+                    <div class="text-3xl font-bold text-purple-600" id="teacherAverageScore">0</div>
+                    <div class="text-gray-600">Rata-rata Nilai</div>
+                </div>
+                <div class="bg-white rounded-xl card-shadow p-6 text-center">
+                    <div class="text-3xl font-bold text-yellow-600" id="teacherHighestScore">0</div>
+                    <div class="text-gray-600">Nilai Tertinggi</div>
+                </div>
+            </div>
+
+            <!-- Detailed Results Table -->
+            <div class="bg-white rounded-xl card-shadow p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">📊 Hasil Detail Siswa</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto" id="resultsTable">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">No</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">NIS</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Nama Siswa</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-700">Kelas</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-700">Skor</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-700">Benar</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-700">Akurasi</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-700">Status</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-700">Percobaan</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-700">Tanggal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <!-- Results will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Student Database
+        const studentDatabase = {
+            '210027': { name: 'ADIBA DWI ASILA', class: '5A' },
+            '210026': { name: 'ADIBA DWI SAKILA', class: '5A' },
+            '210011': { name: 'ADIVA AHMED', class: '5A' },
+            '210012': { name: 'AGUNG RENATA', class: '5A' },
+            '210021': { name: 'ASKAR NUFAIL', class: '5A' },
+            '210010': { name: 'DAFFA JIHAD FISABILILLAH', class: '5A' },
+            '210023': { name: 'DAVA PRATAMA', class: '5A' },
+            '230069': { name: 'FADIL', class: '5A' },
+            '240078': { name: 'FAIZATUN NI\'MAH', class: '5A' },
+            '210004': { name: 'FAREL FIRMANSYAH', class: '5A' },
+            '210022': { name: 'FATIMAH AZ-ZAHRA', class: '5A' },
+            '210002': { name: 'HAFIZAM', class: '5A' },
+            '210015': { name: 'ISMATUL ROHILAH', class: '5A' },
+            '210028': { name: 'MAURA FEBRIA', class: '5A' },
+            '200020': { name: 'MIA ANGGRAINI', class: '5A' },
+            '210008': { name: 'MUHAMMAD DEMIYAN', class: '5A' },
+            '200014': { name: 'MUHAMMAD HASAN AL MALIKI', class: '5A' },
+            '210020': { name: 'MUHAMMAD KHOIRUL AZAM', class: '5A' },
+            '210024': { name: 'MUHAMMAD NABIL', class: '5A' },
+            '210007': { name: 'MUHAMMAD WAHYU SAPUTRA', class: '5A' },
+            '210025': { name: 'MULTAZAM', class: '5A' },
+            '210013': { name: 'NOVI AMALIA', class: '5A' },
+            '210018': { name: 'NURIDZATI EL MUBARAK', class: '5A' },
+            '210003': { name: 'OCTAVIANI', class: '5A' },
+            '210014': { name: 'PUTRI ANJANI', class: '5A' },
+            '210006': { name: 'PUTRI FIANI', class: '5A' },
+            '210019': { name: 'RENALDO PRASETYO', class: '5A' },
+            '210005': { name: 'RISKI ROMADHON', class: '5A' },
+            '210017': { name: 'SAKINAH', class: '5A' },
+            '210001': { name: 'SHAFIRA TAUFIQRY', class: '5A' },
+            '210029': { name: 'ULFATUL BARIYAH', class: '5A' },
+            '210030': { name: 'ZAINUL ARIF', class: '5A' },
+            '210053': { name: 'AHMAD YUSRIL', class: '5B' },
+            '210061': { name: 'AISYAH ZAHRA', class: '5B' },
+            '210048': { name: 'AKILATUL MURNI', class: '5B' },
+            '210057': { name: 'ALIA MAYSARA', class: '5B' },
+            '210033': { name: 'ALIYA FITRIA', class: '5B' },
+            '210051': { name: 'ALVIANSYAH', class: '5B' },
+            '210043': { name: 'ANGGA ARIF PUTRA', class: '5B' },
+            '210036': { name: 'ANGGI SHILVIA PUTRI', class: '5B' },
+            '210035': { name: 'ASHILAH', class: '5B' },
+            '210037': { name: 'ASYFA', class: '5B' },
+            '210038': { name: 'AZIQUR\'ROHMAN ASARY', class: '5B' },
+            '210059': { name: 'AZKYA RAMADHANI', class: '5B' },
+            '210060': { name: 'BUDI SETIAWAN', class: '5B' },
+            '210047': { name: 'HAFIFAH RAMADHANI', class: '5B' },
+            '230070': { name: 'ILHAM', class: '5B' },
+            '210058': { name: 'LAILATUL ADEWIYEH', class: '5B' },
+            '210044': { name: 'LAILATUL RAMADANIA', class: '5B' },
+            '210031': { name: 'LUTFI ABDILLAH', class: '5B' },
+            '210041': { name: 'MUHAMMAD ADAM AIMAN', class: '5B' },
+            '210055': { name: 'MUHAMMAD FAHROZI', class: '5B' },
+            '210050': { name: 'MUHAMMAD HASANUDIN', class: '5B' },
+            '200050': { name: 'MUHAMMAD RIZAL', class: '5B' },
+            '210046': { name: 'MUHAMMAD ZAINUL ARIFIN', class: '5B' },
+            '210034': { name: 'NABILA OKTAVIA', class: '5B' },
+            '210052': { name: 'NAURA SYIFA AZZURA', class: '5B' },
+            '210045': { name: 'NIKMATUL KHOIRIYAH', class: '5B' },
+            '210039': { name: 'NURUL NAJWA', class: '5B' },
+            '210049': { name: 'RAFA ASKA PUTRA', class: '5B' },
+            '210040': { name: 'RAFFI MAULANA', class: '5B' },
+            '210032': { name: 'RAKHA DESMINANDO', class: '5B' },
+            '210042': { name: 'RATI ANDINI', class: '5B' },
+            '190008': { name: 'WAEL HASAN', class: '5B' }
+        };
+
+        // Teacher login credentials
+        const TEACHER_LOGIN = '19760801';
+
+        // Quiz data - 20 questions about Hukum Bacaan Mim Mati
+        const originalQuizData = [
+            {
+                question: "Apa yang dimaksud dengan Mim Mati?",
+                answers: ["Mim yang berharakat fathah", "Mim yang berharakat kasrah", "Mim yang tidak berharakat (sukun)", "Mim yang berharakat dhammah"],
+                correct: 2
+            },
+            {
+                question: "Berapa macam hukum bacaan Mim Mati?",
+                answers: ["2 macam", "3 macam", "4 macam", "5 macam"],
+                correct: 1
+            },
+            {
+                question: "Sebutkan hukum bacaan Mim Mati yang pertama!",
+                answers: ["Ikhfa Syafawi", "Idgham Mimi", "Izhar Syafawi", "Iqlab"],
+                correct: 0
+            },
+            {
+                question: "Kapan hukum Ikhfa Syafawi terjadi?",
+                answers: ["Mim mati bertemu Ba", "Mim mati bertemu Mim", "Mim mati bertemu selain Ba dan Mim", "Mim mati di akhir ayat"],
+                correct: 0
+            },
+            {
+                question: "Bagaimana cara membaca Ikhfa Syafawi?",
+                answers: ["Jelas dan tegas", "Samar-samar dengan dengung", "Dimasukkan ke huruf berikutnya", "Dipanjangkan"],
+                correct: 1
+            },
+            {
+                question: "Apa hukum bacaan ketika Mim Mati bertemu Mim?",
+                answers: ["Ikhfa Syafawi", "Idgham Mimi", "Izhar Syafawi", "Iqlab"],
+                correct: 1
+            },
+            {
+                question: "Berapa harakat panjang bacaan Idgham Mimi?",
+                answers: ["1 harakat", "2 harakat", "3 harakat", "4 harakat"],
+                correct: 1
+            },
+            {
+                question: "Contoh Ikhfa Syafawi terdapat pada lafaz:",
+                answers: ["<span class='arabic-text'>أَمْ مَنْ</span>", "<span class='arabic-text'>رَبَّهُمْ بِالْغَيْبِ</span>", "<span class='arabic-text'>هُمْ مُفْلِحُونَ</span>", "<span class='arabic-text'>وَمِنْهُمْ</span>"],
+                correct: 1
+            },
+            {
+                question: "Apa hukum bacaan Mim Mati jika bertemu huruf selain Ba dan Mim?",
+                answers: ["Ikhfa Syafawi", "Idgham Mimi", "Izhar Syafawi", "Iqlab"],
+                correct: 2
+            },
+            {
+                question: "Bagaimana cara membaca Izhar Syafawi?",
+                answers: ["Samar-samar", "Jelas dan tegas", "Dengan dengung", "Dipanjangkan"],
+                correct: 1
+            },
+            {
+                question: "Huruf apa saja yang menyebabkan Izhar Syafawi?",
+                answers: ["Ba dan Mim", "Semua huruf hijaiyah", "Selain Ba dan Mim", "Huruf Mad saja"],
+                correct: 2
+            },
+            {
+                question: "Contoh Idgham Mimi terdapat pada lafaz:",
+                answers: ["<span class='arabic-text'>رَبَّهُمْ بِالْغَيْبِ</span>", "<span class='arabic-text'>لَهُمْ مَا يَشَاءُونَ</span>", "<span class='arabic-text'>أَمْ مَنْ خَلَقَ</span>", "<span class='arabic-text'>هُمْ فِيهَا</span>"],
+                correct: 1
+            },
+            {
+                question: "Mengapa disebut 'Syafawi' pada hukum bacaan Mim Mati?",
+                answers: ["Karena melibatkan bibir", "Karena suara jernih", "Karena ada dengung", "Karena dipanjangkan"],
+                correct: 0
+            },
+            {
+                question: "Dalam Idgham Mimi, Mim yang pertama:",
+                answers: ["Dibaca jelas", "Dimasukkan ke Mim kedua", "Dihilangkan", "Dipanjangkan"],
+                correct: 1
+            },
+            {
+                question: "Contoh Izhar Syafawi terdapat pada lafaz:",
+                answers: ["<span class='arabic-text'>أَمْ مَنْ</span>", "<span class='arabic-text'>رَبَّهُمْ بِالْغَيْبِ</span>", "<span class='arabic-text'>أَنْعَمْتَ عَلَيْهِمْ</span>", "<span class='arabic-text'>لَهُمْ مَا</span>"],
+                correct: 2
+            },
+            {
+                question: "Tanda yang digunakan untuk Mim Mati adalah:",
+                answers: ["Fathah", "Kasrah", "Dhammah", "Sukun"],
+                correct: 3
+            },
+            {
+                question: "Dalam hukum Ikhfa Syafawi, bibir:",
+                answers: ["Terbuka lebar", "Tertutup rapat", "Hampir bertemu", "Tidak berperan"],
+                correct: 2
+            },
+            {
+                question: "Hukum bacaan '<span class='arabic-text'>هُمْ بِرَبِّهِمْ</span>' adalah:",
+                answers: ["Ikhfa Syafawi", "Idgham Mimi", "Izhar Syafawi", "Tidak ada hukum"],
+                correct: 0
+            },
+            {
+                question: "Yang bukan termasuk hukum bacaan Mim Mati adalah:",
+                answers: ["Ikhfa Syafawi", "Idgham Mimi", "Izhar Syafawi", "Iqlab"],
+                correct: 3
+            },
+            {
+                question: "Dalam membaca Ikhfa Syafawi, suara yang keluar adalah:",
+                answers: ["Sangat jelas", "Samar dengan sedikit dengung", "Tidak bersuara", "Sangat keras"],
+                correct: 1
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let correctAnswers = 0;
+        let timeLeft = 30;
+        let timer;
+        let playerName = '';
+        let playerNIS = '';
+        let playerClass = '';
+        let isTeacher = false;
+        let leaderboard = JSON.parse(localStorage.getItem('quizLeaderboard')) || [];
+        let gameSession = null;
+        let allPlayers = JSON.parse(localStorage.getItem('allQuizPlayers')) || [];
+        let quizData = []; // Will be populated with randomized questions
+
+        // Function to shuffle array
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Function to randomize questions and answers
+        function initializeQuiz() {
+            // Shuffle questions
+            const shuffledQuestions = shuffleArray(originalQuizData);
+            
+            // Shuffle answers for each question and update correct answer index
+            quizData = shuffledQuestions.map(question => {
+                const answers = [...question.answers];
+                const correctAnswer = answers[question.correct];
+                
+                // Shuffle answers
+                const shuffledAnswers = shuffleArray(answers);
+                
+                // Find new index of correct answer
+                const newCorrectIndex = shuffledAnswers.indexOf(correctAnswer);
+                
+                return {
+                    question: question.question,
+                    answers: shuffledAnswers,
+                    correct: newCorrectIndex
+                };
+            });
+        }
+
+        function checkNIS() {
+            const nisInput = document.getElementById('nisInput');
+            const studentInfo = document.getElementById('studentInfo');
+            const studentName = document.getElementById('studentName');
+            const studentClass = document.getElementById('studentClass');
+            const nis = nisInput.value.trim();
+            
+            if (nis === TEACHER_LOGIN) {
+                // Teacher login
+                isTeacher = true;
+                studentInfo.classList.remove('hidden');
+                studentInfo.className = 'mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg';
+                studentName.textContent = '👨‍🏫 GURU';
+                studentName.className = 'font-semibold text-blue-800';
+                studentClass.textContent = 'Akses Dashboard Guru';
+                studentClass.className = 'text-sm text-blue-600';
+                return;
+            }
+            
+            if (nis && studentDatabase[nis]) {
+                // Valid student NIS
+                isTeacher = false;
+                const student = studentDatabase[nis];
+                studentInfo.classList.remove('hidden');
+                studentInfo.className = 'mt-3 p-3 bg-green-50 border border-green-200 rounded-lg';
+                studentName.textContent = student.name;
+                studentName.className = 'font-semibold text-green-800';
+                studentClass.textContent = `Kelas ${student.class}`;
+                studentClass.className = 'text-sm text-green-600';
+                playerName = student.name;
+                playerNIS = nis;
+                playerClass = student.class;
+            } else if (nis) {
+                // Invalid NIS
+                isTeacher = false;
+                studentInfo.classList.remove('hidden');
+                studentInfo.className = 'mt-3 p-3 bg-red-50 border border-red-200 rounded-lg';
+                studentName.textContent = 'NIS tidak ditemukan';
+                studentName.className = 'font-semibold text-red-800';
+                studentClass.textContent = 'Periksa kembali NIS Anda';
+                studentClass.className = 'text-sm text-red-600';
+                playerName = '';
+                playerNIS = '';
+                playerClass = '';
+            } else {
+                // Empty input
+                studentInfo.classList.add('hidden');
+                playerName = '';
+                playerNIS = '';
+                playerClass = '';
+                isTeacher = false;
+            }
+        }
+
+        function startQuiz() {
+            const nisInput = document.getElementById('nisInput').value.trim();
+            
+            if (!nisInput) {
+                alert('Silakan masukkan NIS Anda terlebih dahulu!');
+                return;
+            }
+            
+            if (nisInput === TEACHER_LOGIN) {
+                // Teacher login - go directly to dashboard
+                showTeacherDashboard();
+                return;
+            }
+            
+            if (!playerName) {
+                alert('NIS tidak valid! Silakan periksa kembali.');
+                return;
+            }
+            
+            // Create game session to track player participation
+            gameSession = {
+                playerName: playerName,
+                playerNIS: playerNIS,
+                playerClass: playerClass,
+                startTime: new Date().toISOString(),
+                questionsAnswered: 0,
+                completed: false
+            };
+            
+            // Add to all players list immediately when starting
+            const existingPlayerIndex = allPlayers.findIndex(p => p.nis === playerNIS);
+            if (existingPlayerIndex === -1) {
+                allPlayers.push({
+                    nis: playerNIS,
+                    name: playerName,
+                    class: playerClass,
+                    firstPlayed: new Date().toLocaleDateString('id-ID'),
+                    totalAttempts: 1,
+                    lastPlayed: new Date().toLocaleDateString('id-ID'),
+                    bestScore: 0,
+                    status: 'Sedang bermain...'
+                });
+            } else {
+                allPlayers[existingPlayerIndex].totalAttempts++;
+                allPlayers[existingPlayerIndex].lastPlayed = new Date().toLocaleDateString('id-ID');
+                allPlayers[existingPlayerIndex].status = 'Sedang bermain...';
+            }
+            
+            localStorage.setItem('allQuizPlayers', JSON.stringify(allPlayers));
+            
+            // Initialize randomized quiz
+            initializeQuiz();
+            
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            document.getElementById('currentPlayer').textContent = playerName;
+            
+            currentQuestion = 0;
+            score = 0;
+            correctAnswers = 0;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= quizData.length) {
+                endQuiz();
+                return;
+            }
+
+            const question = quizData[currentQuestion];
+            document.getElementById('questionNumber').textContent = currentQuestion + 1;
+            document.getElementById('questionText').textContent = question.question;
+            
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+
+            const answersContainer = document.getElementById('answersContainer');
+            answersContainer.innerHTML = '';
+
+            question.answers.forEach((answer, index) => {
+                const button = document.createElement('button');
+                button.className = 'w-full p-4 text-left bg-gray-50 hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 rounded-lg transition-all duration-300 font-medium';
+                button.innerHTML = `<span class="font-semibold text-purple-600">${String.fromCharCode(65 + index)}.</span> ${answer}`;
+                button.onclick = () => selectAnswer(index);
+                answersContainer.appendChild(button);
+            });
+
+            startTimer();
+        }
+
+        function selectAnswer(selectedIndex) {
+            clearInterval(timer);
+            
+            // Track question progress
+            if (gameSession) {
+                gameSession.questionsAnswered++;
+            }
+            
+            const question = quizData[currentQuestion];
+            const buttons = document.querySelectorAll('#answersContainer button');
+            
+            buttons.forEach((button, index) => {
+                button.disabled = true;
+                if (index === question.correct) {
+                    button.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+                } else if (index === selectedIndex && index !== question.correct) {
+                    button.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
+                }
+            });
+
+            if (selectedIndex === question.correct) {
+                correctAnswers++;
+                const timeBonus = Math.max(0, timeLeft * 2);
+                score += 100 + timeBonus;
+                document.getElementById('currentScore').textContent = score;
+            }
+
+            setTimeout(() => {
+                currentQuestion++;
+                showQuestion();
+            }, 2000);
+        }
+
+        function startTimer() {
+            timeLeft = 30;
+            document.getElementById('timer').textContent = timeLeft;
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    selectAnswer(-1); // Auto-select wrong answer when time runs out
+                }
+            }, 1000);
+        }
+
+        function endQuiz() {
+            clearInterval(timer);
+            
+            // Mark session as completed
+            if (gameSession) {
+                gameSession.completed = true;
+                gameSession.endTime = new Date().toISOString();
+                gameSession.finalScore = score;
+            }
+            
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            
+            const accuracy = Math.round((correctAnswers / quizData.length) * 100);
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('correctAnswers').textContent = correctAnswers;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+            
+            // Update player status and best score
+            const playerIndex = allPlayers.findIndex(p => p.nis === playerNIS);
+            if (playerIndex !== -1) {
+                allPlayers[playerIndex].status = 'Selesai';
+                if (score > allPlayers[playerIndex].bestScore) {
+                    allPlayers[playerIndex].bestScore = score;
+                }
+            }
+            
+            // Add to leaderboard (everyone who completes gets recorded)
+            const playerResult = {
+                nis: playerNIS,
+                name: playerName,
+                class: playerClass,
+                score: score,
+                correct: correctAnswers,
+                accuracy: accuracy,
+                date: new Date().toLocaleDateString('id-ID'),
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+            };
+            
+            // Show teacher dashboard button only for teachers
+            if (isTeacher) {
+                document.getElementById('teacherDashboardBtn').classList.remove('hidden');
+            }
+            
+            leaderboard.push(playerResult);
+            leaderboard.sort((a, b) => b.score - a.score);
+            // Keep more entries to ensure everyone is recorded
+            leaderboard = leaderboard.slice(0, 50);
+            
+            localStorage.setItem('quizLeaderboard', JSON.stringify(leaderboard));
+            localStorage.setItem('allQuizPlayers', JSON.stringify(allPlayers));
+            updateLeaderboard();
+        }
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('[id$="Tab"]').forEach(tab => {
+                tab.classList.remove('bg-purple-500', 'text-white');
+                tab.classList.add('text-gray-600');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + 'Content').classList.remove('hidden');
+            
+            // Add active class to selected tab
+            document.getElementById(tabName + 'Tab').classList.add('bg-purple-500', 'text-white');
+            document.getElementById(tabName + 'Tab').classList.remove('text-gray-600');
+            
+            // Update content based on tab
+            if (tabName === 'leaderboard') {
+                updateLeaderboard();
+            } else if (tabName === 'allPlayers') {
+                updateAllPlayersList();
+            } else if (tabName === 'statistics') {
+                updateStatistics();
+            }
+        }
+
+        function updateLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+            
+            if (leaderboard.length === 0) {
+                leaderboardList.innerHTML = '<p class="text-center text-gray-500">Belum ada data leaderboard</p>';
+                return;
+            }
+            
+            // Show top 20 to ensure more players are visible
+            const topPlayers = leaderboard.slice(0, 20);
+            
+            topPlayers.forEach((player, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg';
+                
+                let medal = '';
+                if (index === 0) medal = '🥇';
+                else if (index === 1) medal = '🥈';
+                else if (index === 2) medal = '🥉';
+                else medal = `#${index + 1}`;
+                
+                entry.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <span class="text-lg font-bold">${medal}</span>
+                        <div>
+                            <div class="font-semibold text-gray-800">${player.name}</div>
+                            <div class="text-sm text-gray-600">Kelas ${player.class || '-'} | ${player.date} ${player.time || ''}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-purple-600">${player.score} poin</div>
+                        <div class="text-sm text-gray-600">${player.correct}/20 benar (${player.accuracy}%)</div>
+                    </div>
+                `;
+                
+                leaderboardList.appendChild(entry);
+            });
+        }
+
+        function updateAllPlayersList() {
+            const allPlayersList = document.getElementById('allPlayersList');
+            allPlayersList.innerHTML = '';
+            
+            if (allPlayers.length === 0) {
+                allPlayersList.innerHTML = '<p class="text-center text-gray-500">Belum ada pemain yang terdaftar</p>';
+                return;
+            }
+            
+            // Sort by last played date
+            const sortedPlayers = [...allPlayers].sort((a, b) => new Date(b.lastPlayed) - new Date(a.lastPlayed));
+            
+            sortedPlayers.forEach((player, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg';
+                
+                let statusColor = 'text-gray-600';
+                let statusIcon = '⏳';
+                if (player.status === 'Selesai') {
+                    statusColor = 'text-green-600';
+                    statusIcon = '✅';
+                } else if (player.status === 'Sedang bermain...') {
+                    statusColor = 'text-blue-600';
+                    statusIcon = '🎮';
+                }
+                
+                entry.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <span class="text-lg">${statusIcon}</span>
+                        <div>
+                            <div class="font-semibold text-gray-800">${player.name}</div>
+                            <div class="text-sm ${statusColor}">${player.status}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-purple-600">${player.bestScore} poin</div>
+                        <div class="text-sm text-gray-600">${player.totalAttempts} percobaan</div>
+                        <div class="text-xs text-gray-500">Terakhir: ${player.lastPlayed}</div>
+                    </div>
+                `;
+                
+                allPlayersList.appendChild(entry);
+            });
+        }
+
+        function updateStatistics() {
+            const statisticsData = document.getElementById('statisticsData');
+            
+            const totalPlayers = allPlayers.length;
+            const completedGames = leaderboard.length;
+            const averageScore = leaderboard.length > 0 ? 
+                Math.round(leaderboard.reduce((sum, player) => sum + player.score, 0) / leaderboard.length) : 0;
+            const highestScore = leaderboard.length > 0 ? Math.max(...leaderboard.map(p => p.score)) : 0;
+            const averageAccuracy = leaderboard.length > 0 ? 
+                Math.round(leaderboard.reduce((sum, player) => sum + player.accuracy, 0) / leaderboard.length) : 0;
+            const todayPlayers = allPlayers.filter(p => p.lastPlayed === new Date().toLocaleDateString('id-ID')).length;
+            
+            statisticsData.innerHTML = `
+                <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-blue-600">${totalPlayers}</div>
+                    <div class="text-sm text-gray-600">Total Pemain</div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-green-600">${completedGames}</div>
+                    <div class="text-sm text-gray-600">Kuis Selesai</div>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-purple-600">${averageScore}</div>
+                    <div class="text-sm text-gray-600">Rata-rata Skor</div>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-yellow-600">${highestScore}</div>
+                    <div class="text-sm text-gray-600">Skor Tertinggi</div>
+                </div>
+                <div class="bg-indigo-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-indigo-600">${averageAccuracy}%</div>
+                    <div class="text-sm text-gray-600">Rata-rata Akurasi</div>
+                </div>
+                <div class="bg-pink-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-pink-600">${todayPlayers}</div>
+                    <div class="text-sm text-gray-600">Bermain Hari Ini</div>
+                </div>
+            `;
+        }
+
+        function restartQuiz() {
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            document.getElementById('nisInput').value = '';
+            document.getElementById('studentInfo').classList.add('hidden');
+            document.getElementById('teacherDashboardBtn').classList.add('hidden');
+            playerName = '';
+            playerNIS = '';
+            playerClass = '';
+            isTeacher = false;
+        }
+
+        // Track players who leave without finishing
+        window.addEventListener('beforeunload', function(e) {
+            if (gameSession && !gameSession.completed && gameSession.questionsAnswered > 0) {
+                // Mark as incomplete but still record the attempt
+                const playerIndex = allPlayers.findIndex(p => p.name === playerName);
+                if (playerIndex !== -1) {
+                    allPlayers[playerIndex].status = 'Tidak selesai';
+                    localStorage.setItem('allQuizPlayers', JSON.stringify(allPlayers));
+                }
+            }
+        });
+
+        // Teacher Dashboard Functions
+        function showTeacherDashboard() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('teacherDashboard').classList.remove('hidden');
+            updateTeacherDashboard();
+        }
+
+        function closeTeacherDashboard() {
+            document.getElementById('teacherDashboard').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            // Reset form
+            document.getElementById('nisInput').value = '';
+            document.getElementById('studentInfo').classList.add('hidden');
+            playerName = '';
+            playerNIS = '';
+            playerClass = '';
+            isTeacher = false;
+        }
+
+        function updateTeacherDashboard() {
+            // Update quick stats
+            const totalPlayers = allPlayers.length;
+            const completedQuiz = leaderboard.length;
+            const averageScore = leaderboard.length > 0 ? 
+                Math.round(leaderboard.reduce((sum, player) => sum + player.score, 0) / leaderboard.length) : 0;
+            const highestScore = leaderboard.length > 0 ? Math.max(...leaderboard.map(p => p.score)) : 0;
+
+            document.getElementById('teacherTotalPlayers').textContent = totalPlayers;
+            document.getElementById('teacherCompletedQuiz').textContent = completedQuiz;
+            document.getElementById('teacherAverageScore').textContent = averageScore;
+            document.getElementById('teacherHighestScore').textContent = highestScore;
+
+            // Update results table
+            updateResultsTable();
+        }
+
+        function updateResultsTable() {
+            const tableBody = document.getElementById('resultsTableBody');
+            tableBody.innerHTML = '';
+
+            if (allPlayers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">Belum ada data siswa</td></tr>';
+                return;
+            }
+
+            // Combine data from allPlayers and leaderboard
+            const combinedData = allPlayers.map(player => {
+                const leaderboardEntry = leaderboard.find(entry => entry.nis === player.nis);
+                return {
+                    nis: player.nis,
+                    name: player.name,
+                    class: player.class,
+                    score: leaderboardEntry ? leaderboardEntry.score : player.bestScore,
+                    correct: leaderboardEntry ? leaderboardEntry.correct : '-',
+                    accuracy: leaderboardEntry ? leaderboardEntry.accuracy : '-',
+                    status: player.status,
+                    attempts: player.totalAttempts,
+                    date: player.lastPlayed
+                };
+            });
+
+            // Sort by score (highest first)
+            combinedData.sort((a, b) => b.score - a.score);
+
+            combinedData.forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                
+                let statusColor = 'text-gray-600';
+                let statusText = student.status;
+                if (student.status === 'Selesai') {
+                    statusColor = 'text-green-600';
+                } else if (student.status === 'Sedang bermain...') {
+                    statusColor = 'text-blue-600';
+                } else if (student.status === 'Tidak selesai') {
+                    statusColor = 'text-red-600';
+                }
+
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-medium">${index + 1}</td>
+                    <td class="px-4 py-3 font-mono text-sm">${student.nis}</td>
+                    <td class="px-4 py-3 font-semibold text-gray-800">${student.name}</td>
+                    <td class="px-4 py-3 text-center font-medium">${student.class}</td>
+                    <td class="px-4 py-3 text-center font-bold text-purple-600">${student.score}</td>
+                    <td class="px-4 py-3 text-center">${student.correct}/20</td>
+                    <td class="px-4 py-3 text-center">${student.accuracy}${student.accuracy !== '-' ? '%' : ''}</td>
+                    <td class="px-4 py-3 text-center ${statusColor} font-medium">${statusText}</td>
+                    <td class="px-4 py-3 text-center">${student.attempts}x</td>
+                    <td class="px-4 py-3 text-center text-sm">${student.date}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        function printAllResults() {
+            const printWindow = window.open('', '_blank');
+            const currentDate = new Date().toLocaleDateString('id-ID');
+            const currentTime = new Date().toLocaleTimeString('id-ID');
+            
+            let printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Laporan Hasil Kuis - Hukum Bacaan Mim Mati</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                        .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+                        .stat-box { text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; font-weight: bold; }
+                        .text-center { text-align: center; }
+                        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>📚 LAPORAN HASIL KUIS</h1>
+                        <h2>Hukum Bacaan Mim Mati</h2>
+                        <p>Dicetak pada: ${currentDate} ${currentTime}</p>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat-box">
+                            <h3>${allPlayers.length}</h3>
+                            <p>Total Siswa</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>${leaderboard.length}</h3>
+                            <p>Selesai Kuis</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>${leaderboard.length > 0 ? Math.round(leaderboard.reduce((sum, player) => sum + player.score, 0) / leaderboard.length) : 0}</h3>
+                            <p>Rata-rata Nilai</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>${leaderboard.length > 0 ? Math.max(...leaderboard.map(p => p.score)) : 0}</h3>
+                            <p>Nilai Tertinggi</p>
+                        </div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Siswa</th>
+                                <th class="text-center">Skor</th>
+                                <th class="text-center">Jawaban Benar</th>
+                                <th class="text-center">Akurasi</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Percobaan</th>
+                                <th class="text-center">Tanggal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Add student data
+            const combinedData = allPlayers.map(player => {
+                const leaderboardEntry = leaderboard.find(entry => entry.name === player.name);
+                return {
+                    name: player.name,
+                    score: leaderboardEntry ? leaderboardEntry.score : player.bestScore,
+                    correct: leaderboardEntry ? leaderboardEntry.correct : '-',
+                    accuracy: leaderboardEntry ? leaderboardEntry.accuracy : '-',
+                    status: player.status,
+                    attempts: player.totalAttempts,
+                    date: player.lastPlayed
+                };
+            });
+
+            combinedData.sort((a, b) => b.score - a.score);
+
+            combinedData.forEach((student, index) => {
+                printContent += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${student.name}</strong></td>
+                        <td class="text-center"><strong>${student.score}</strong></td>
+                        <td class="text-center">${student.correct}/20</td>
+                        <td class="text-center">${student.accuracy}${student.accuracy !== '-' ? '%' : ''}</td>
+                        <td class="text-center">${student.status}</td>
+                        <td class="text-center">${student.attempts}x</td>
+                        <td class="text-center">${student.date}</td>
+                    </tr>
+                `;
+            });
+
+            printContent += `
+                        </tbody>
+                    </table>
+                    
+                    <div class="footer">
+                        <p>Laporan ini dibuat secara otomatis oleh Sistem Kuis Online</p>
+                        <p>Total ${allPlayers.length} siswa terdaftar | ${leaderboard.length} siswa menyelesaikan kuis</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function exportToCSV() {
+            const combinedData = allPlayers.map(player => {
+                const leaderboardEntry = leaderboard.find(entry => entry.name === player.name);
+                return {
+                    name: player.name,
+                    score: leaderboardEntry ? leaderboardEntry.score : player.bestScore,
+                    correct: leaderboardEntry ? leaderboardEntry.correct : 0,
+                    accuracy: leaderboardEntry ? leaderboardEntry.accuracy : 0,
+                    status: player.status,
+                    attempts: player.totalAttempts,
+                    date: player.lastPlayed
+                };
+            });
+
+            combinedData.sort((a, b) => b.score - a.score);
+
+            let csvContent = "No,Nama Siswa,Skor,Jawaban Benar,Akurasi (%),Status,Percobaan,Tanggal\n";
+            
+            combinedData.forEach((student, index) => {
+                csvContent += `${index + 1},"${student.name}",${student.score},${student.correct},${student.accuracy},"${student.status}",${student.attempts},"${student.date}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Hasil_Kuis_Mim_Mati_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ PERINGATAN!\n\nApakah Anda yakin ingin menghapus SEMUA data kuis?\nTindakan ini tidak dapat dibatalkan!')) {
+                if (confirm('Konfirmasi sekali lagi: Hapus semua data siswa dan hasil kuis?')) {
+                    localStorage.removeItem('quizLeaderboard');
+                    localStorage.removeItem('allQuizPlayers');
+                    leaderboard = [];
+                    allPlayers = [];
+                    updateTeacherDashboard();
+                    alert('✅ Semua data berhasil dihapus!');
+                }
+            }
+        }
+
+        function generateReport() {
+            const reportWindow = window.open('', '_blank');
+            const currentDate = new Date().toLocaleDateString('id-ID');
+            const currentTime = new Date().toLocaleTimeString('id-ID');
+            
+            // Calculate detailed statistics
+            const totalStudents = allPlayers.length;
+            const completedStudents = leaderboard.length;
+            const incompleteStudents = allPlayers.filter(p => p.status === 'Tidak selesai').length;
+            const averageScore = leaderboard.length > 0 ? 
+                Math.round(leaderboard.reduce((sum, player) => sum + player.score, 0) / leaderboard.length) : 0;
+            const averageAccuracy = leaderboard.length > 0 ? 
+                Math.round(leaderboard.reduce((sum, player) => sum + player.accuracy, 0) / leaderboard.length) : 0;
+            const highestScore = leaderboard.length > 0 ? Math.max(...leaderboard.map(p => p.score)) : 0;
+            const lowestScore = leaderboard.length > 0 ? Math.min(...leaderboard.map(p => p.score)) : 0;
+            
+            // Grade distribution
+            const gradeA = leaderboard.filter(p => p.accuracy >= 90).length;
+            const gradeB = leaderboard.filter(p => p.accuracy >= 80 && p.accuracy < 90).length;
+            const gradeC = leaderboard.filter(p => p.accuracy >= 70 && p.accuracy < 80).length;
+            const gradeD = leaderboard.filter(p => p.accuracy < 70).length;
+
+            let reportContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Laporan Analisis Kuis - Hukum Bacaan Mim Mati</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #333; padding-bottom: 20px; }
+                        .section { margin: 30px 0; }
+                        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+                        .stat-card { border: 2px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; }
+                        .stat-number { font-size: 2em; font-weight: bold; color: #333; }
+                        .stat-label { color: #666; margin-top: 5px; }
+                        .grade-distribution { display: flex; justify-content: space-around; margin: 20px 0; }
+                        .grade-item { text-align: center; padding: 10px; border-radius: 5px; min-width: 80px; }
+                        .grade-a { background-color: #d4edda; border: 1px solid #c3e6cb; }
+                        .grade-b { background-color: #d1ecf1; border: 1px solid #bee5eb; }
+                        .grade-c { background-color: #fff3cd; border: 1px solid #ffeaa7; }
+                        .grade-d { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+                        .recommendations { background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff; }
+                        .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
+                        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+                        h3 { color: #555; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>📊 LAPORAN ANALISIS KUIS</h1>
+                        <h2>Hukum Bacaan Mim Mati</h2>
+                        <p><strong>Tanggal Laporan:</strong> ${currentDate} ${currentTime}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>📈 Statistik Umum</h2>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number">${totalStudents}</div>
+                                <div class="stat-label">Total Siswa Terdaftar</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">${completedStudents}</div>
+                                <div class="stat-label">Siswa Selesai Kuis</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">${incompleteStudents}</div>
+                                <div class="stat-label">Siswa Belum Selesai</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">${Math.round((completedStudents/totalStudents)*100) || 0}%</div>
+                                <div class="stat-label">Tingkat Penyelesaian</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>🎯 Analisis Nilai</h2>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number">${averageScore}</div>
+                                <div class="stat-label">Rata-rata Skor</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">${averageAccuracy}%</div>
+                                <div class="stat-label">Rata-rata Akurasi</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">${highestScore}</div>
+                                <div class="stat-label">Skor Tertinggi</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">${lowestScore}</div>
+                                <div class="stat-label">Skor Terendah</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>📊 Distribusi Nilai</h2>
+                        <div class="grade-distribution">
+                            <div class="grade-item grade-a">
+                                <h3>${gradeA}</h3>
+                                <p>Nilai A<br>(90-100%)</p>
+                            </div>
+                            <div class="grade-item grade-b">
+                                <h3>${gradeB}</h3>
+                                <p>Nilai B<br>(80-89%)</p>
+                            </div>
+                            <div class="grade-item grade-c">
+                                <h3>${gradeC}</h3>
+                                <p>Nilai C<br>(70-79%)</p>
+                            </div>
+                            <div class="grade-item grade-d">
+                                <h3>${gradeD}</h3>
+                                <p>Nilai D<br>(<70%)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="recommendations">
+                            <h2>💡 Rekomendasi dan Analisis</h2>
+                            <h3>Pencapaian Positif:</h3>
+                            <ul>
+                                <li><strong>Partisipasi:</strong> ${Math.round((completedStudents/totalStudents)*100) || 0}% siswa menyelesaikan kuis</li>
+                                <li><strong>Pemahaman:</strong> Rata-rata akurasi ${averageAccuracy}% menunjukkan tingkat pemahaman yang ${averageAccuracy >= 75 ? 'baik' : 'perlu ditingkatkan'}</li>
+                                <li><strong>Prestasi:</strong> ${gradeA} siswa mencapai nilai A (sangat baik)</li>
+                            </ul>
+                            
+                            <h3>Area yang Perlu Perhatian:</h3>
+                            <ul>
+                                ${incompleteStudents > 0 ? `<li><strong>Penyelesaian:</strong> ${incompleteStudents} siswa belum menyelesaikan kuis</li>` : ''}
+                                ${averageAccuracy < 75 ? `<li><strong>Pemahaman:</strong> Rata-rata akurasi ${averageAccuracy}% perlu ditingkatkan</li>` : ''}
+                                ${gradeD > 0 ? `<li><strong>Remedial:</strong> ${gradeD} siswa memerlukan bimbingan tambahan</li>` : ''}
+                            </ul>
+                            
+                            <h3>Saran Tindak Lanjut:</h3>
+                            <ul>
+                                <li>Berikan review materi untuk siswa dengan nilai di bawah 70%</li>
+                                <li>Adakan sesi tanya jawab untuk memperdalam pemahaman</li>
+                                <li>Berikan apresiasi kepada siswa berprestasi tinggi</li>
+                                <li>Pantau siswa yang belum menyelesaikan kuis</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p><strong>Laporan dibuat secara otomatis oleh Sistem Kuis Online</strong></p>
+                        <p>Materi: Hukum Bacaan Mim Mati | Total Soal: 20 | Waktu per Soal: 30 detik</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            reportWindow.document.write(reportContent);
+            reportWindow.document.close();
+            reportWindow.print();
+        }
+
+        // Initialize leaderboard on page load
+        window.onload = function() {
+            updateLeaderboard();
+            updateAllPlayersList();
+            updateStatistics();
+            // Initialize quiz data for the first time
+            initializeQuiz();
+        };
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96e695e5209ece65',t:'MTc1NTA3MTA0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
