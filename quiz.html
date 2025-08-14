@@ -658,60 +658,79 @@
             }, 1000);
         }
 
-        function endQuiz() {
-            clearInterval(timer);
-            
-            // Mark session as completed
-            if (gameSession) {
-                gameSession.completed = true;
-                gameSession.endTime = new Date().toISOString();
-                gameSession.finalScore = score;
-            }
-            
-            document.getElementById('quizScreen').classList.add('hidden');
-            document.getElementById('resultsScreen').classList.remove('hidden');
-            
-            const accuracy = Math.round((correctAnswers / quizData.length) * 100);
-            
-            document.getElementById('finalScore').textContent = score;
-            document.getElementById('correctAnswers').textContent = correctAnswers;
-            document.getElementById('accuracy').textContent = accuracy + '%';
-            
-            // Update player status and best score
-            const playerIndex = allPlayers.findIndex(p => p.nis === playerNIS);
-            if (playerIndex !== -1) {
-                allPlayers[playerIndex].status = 'Selesai';
-                if (score > allPlayers[playerIndex].bestScore) {
-                    allPlayers[playerIndex].bestScore = score;
-                }
-            }
-            
-            // Add to leaderboard (everyone who completes gets recorded)
-            const playerResult = {
-                nis: playerNIS,
-                name: playerName,
-                class: playerClass,
-                score: score,
-                correct: correctAnswers,
-                accuracy: accuracy,
-                date: new Date().toLocaleDateString('id-ID'),
-                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-            };
-            
-            // Show teacher dashboard button only for teachers
-            if (isTeacher) {
-                document.getElementById('teacherDashboardBtn').classList.remove('hidden');
-            }
-            
-            leaderboard.push(playerResult);
-            leaderboard.sort((a, b) => b.score - a.score);
-            // Keep more entries to ensure everyone is recorded
-            leaderboard = leaderboard.slice(0, 50);
-            
-            localStorage.setItem('quizLeaderboard', JSON.stringify(leaderboard));
-            localStorage.setItem('allQuizPlayers', JSON.stringify(allPlayers));
-            updateLeaderboard();
+function endQuiz() {
+    clearInterval(timer);
+    
+    // Mark session as completed
+    if (gameSession) {
+        gameSession.completed = true;
+        gameSession.endTime = new Date().toISOString();
+        gameSession.finalScore = score;
+    }
+    
+    document.getElementById('quizScreen').classList.add('hidden');
+    document.getElementById('resultsScreen').classList.remove('hidden');
+    
+    const accuracy = Math.round((correctAnswers / quizData.length) * 100);
+    
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('correctAnswers').textContent = correctAnswers;
+    document.getElementById('accuracy').textContent = accuracy + '%';
+    
+    // Update player status and best score
+    const playerIndex = allPlayers.findIndex(p => p.nis === playerNIS);
+    if (playerIndex !== -1) {
+        allPlayers[playerIndex].status = 'Selesai';
+        if (score > allPlayers[playerIndex].bestScore) {
+            allPlayers[playerIndex].bestScore = score;
         }
+    }
+    
+    // Buat objek hasil
+    const playerResult = {
+        nis: playerNIS,
+        name: playerName,
+        class: playerClass,
+        score: score,
+        correct: correctAnswers,
+        accuracy: accuracy,
+        date: new Date().toLocaleDateString('id-ID'),
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    // Kirim ke Google Sheet
+    fetch("https://script.google.com/macros/s/AKfycbwaKfWa_8jE-C2TtCgUpPr-rwvifvKdkZB_UwQ_ojE4DXtXAqe-WzP4VCaiSOEcn9zW/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            nis: playerNIS,
+            nama: playerName,
+            kelas: playerClass,
+            skor: score,
+            benar: correctAnswers,
+            akurasi: accuracy,
+            status: "Selesai",
+            percobaan: allPlayers.find(p => p.nis === playerNIS)?.totalAttempts || 1,
+            tanggal: new Date().toLocaleDateString('id-ID')
+        })
+    })
+    .then(res => res.json())
+    .then(res => console.log("✅ Data terkirim ke Google Sheet:", res))
+    .catch(err => console.error("❌ Gagal kirim data:", err));
+    
+    // Tampilkan tombol dashboard guru kalau guru
+    if (isTeacher) {
+        document.getElementById('teacherDashboardBtn').classList.remove('hidden');
+    }
+    
+    leaderboard.push(playerResult);
+    leaderboard.sort((a, b) => b.score - a.score);
+    leaderboard = leaderboard.slice(0, 50);
+    
+    localStorage.setItem('quizLeaderboard', JSON.stringify(leaderboard));
+    localStorage.setItem('allQuizPlayers', JSON.stringify(allPlayers));
+    updateLeaderboard();
+}
 
         function showTab(tabName) {
             // Hide all tab contents
