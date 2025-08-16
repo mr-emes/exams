@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Siswa - Sistem Upload Tugas - MIN SINGKAWANG</title>
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Kementerian_Agama_new_logo.png/640px-Kementerian_Agama_new_logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .status-submitted {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .status-graded {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-late {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        .status-overdue {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .blue-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        .blue-btn:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .nav-tab.active {
+            border-color: #3b82f6 !important;
+            color: #3b82f6 !important;
+            background-color: #eff6ff;
+        }
+        .nav-tab:not(.active) {
+            border-color: transparent;
+            color: #6b7280;
+        }
+        .nav-tab:not(.active):hover {
+            color: #374151;
+            background-color: #f9fafb;
+        }
+        .assignment-card {
+            border-left: 4px solid #e5e7eb;
+        }
+        .assignment-card.active {
+            border-left-color: #10b981;
+        }
+        .assignment-card.submitted {
+            border-left-color: #3b82f6;
+        }
+        .assignment-card.graded {
+            border-left-color: #8b5cf6;
+        }
+        .assignment-card.overdue {
+            border-left-color: #ef4444;
+        }
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            transition: all 0.3s ease;
+        }
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center p-2 shadow-lg">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Kementerian_Agama_new_logo.png/640px-Kementerian_Agama_new_logo.png" alt="Logo Kemenag" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-normal text-white">Panel Siswa - Sistem Upload Tugas</h1>
+                        <p class="text-blue-100 text-3xl font-bold">MIN SINGKAWANG</p>
+                        <p class="text-blue-200 text-sm italic">Madrasah Maju, Bermutu, Mendunia</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4" id="headerUser" style="display: none;">
+                    <div class="text-right">
+                        <p class="text-white font-medium" id="studentName">Loading...</p>
+                        <p class="text-blue-100 text-sm" id="studentClass">Loading...</p>
+                    </div>
+                    <button onclick="logout()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 mx-auto mb-4 bg-white rounded-xl flex items-center justify-center p-3 shadow-lg border-2 border-blue-200">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Kementerian_Agama_new_logo.png/640px-Kementerian_Agama_new_logo.png" alt="Logo Kemenag" class="w-full h-full object-contain">
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Login Siswa</h2>
+                <p class="text-gray-600 mb-1">MIN SINGKAWANG</p>
+                <p class="text-sm text-blue-600 italic mb-4">Portal Pengumpulan Tugas</p>
+            </div>
+            
+            <form onsubmit="login(event)" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">NISN (Nomor Induk Siswa Nasional)</label>
+                    <input type="text" id="nisnInput" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Masukkan NISN Anda">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="passwordInput" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Masukkan Password">
+                </div>
+                <button type="submit" id="loginBtn"
+                        class="w-full blue-btn text-white py-3 rounded-lg font-medium transition-all">
+                    Masuk ke Portal Siswa
+                </button>
+            </form>
+            
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-800 font-medium mb-2">🔑 Demo Login:</p>
+                <div class="text-xs text-blue-700 space-y-1">
+                    <p>NISN: 1234567890, Pass: siswa123 (Ahmad Rizki - 6A)</p>
+                    <p>NISN: 0987654321, Pass: siswa123 (Siti Nurhaliza - 6A)</p>
+                    <p>NISN: 1122334455, Pass: siswa123 (Muhammad Fajar - 6B)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="mainContent" style="display: none;">
+        <!-- Welcome Banner -->
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 mb-8 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Selamat Datang di Portal Siswa!</h2>
+                    <p class="text-blue-100">Lihat tugas dan kumpulkan pekerjaan Anda dengan mudah</p>
+                </div>
+                <div class="hidden md:block">
+                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <span class="text-3xl">🎓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="text-blue-600 text-xl">📚</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Tugas</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalAssignments">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="text-green-600 text-xl">✅</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Selesai</p>
+                        <p class="text-2xl font-bold text-gray-900" id="completedAssignments">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <span class="text-yellow-600 text-xl">⏳</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Pending</p>
+                        <p class="text-2xl font-bold text-gray-900" id="pendingAssignments">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="text-purple-600 text-xl">📊</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Rata-rata Nilai</p>
+                        <p class="text-2xl font-bold text-gray-900" id="averageGrade">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                    <button onclick="switchTab('assignments')" class="nav-tab active py-4 px-1 border-b-2 font-medium text-sm">
+                        📚 Daftar Tugas
+                    </button>
+                    <button onclick="switchTab('submissions')" class="nav-tab py-4 px-1 border-b-2 font-medium text-sm">
+                        📤 Pengumpulan Saya
+                    </button>
+                    <button onclick="switchTab('grades')" class="nav-tab py-4 px-1 border-b-2 font-medium text-sm">
+                        📊 Nilai & Rapor
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tab Content: Assignments -->
+        <div id="assignmentsTab" class="tab-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Daftar Tugas</h3>
+                <div class="flex space-x-3">
+                    <select id="subjectFilter" onchange="filterAssignments()" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="">Semua Mata Pelajaran</option>
+                    </select>
+                    <select id="statusFilter" onchange="filterAssignments()" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="">Semua Status</option>
+                        <option value="active">Aktif</option>
+                        <option value="submitted">Sudah Dikumpul</option>
+                        <option value="graded">Sudah Dinilai</option>
+                        <option value="overdue">Terlambat</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="space-y-4" id="assignmentsList">
+                <div class="text-center py-12">
+                    <div class="loading mx-auto mb-4"></div>
+                    <p class="text-gray-600">Memuat daftar tugas...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Submissions -->
+        <div id="submissionsTab" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Riwayat Pengumpulan</h3>
+                <div class="text-sm text-gray-600">
+                    Total: <span id="totalSubmissions">0</span> pengumpulan
+                </div>
+            </div>
+            
+            <div class="space-y-4" id="submissionsList">
+                <div class="text-center py-12">
+                    <div class="loading mx-auto mb-4"></div>
+                    <p class="text-gray-600">Memuat riwayat pengumpulan...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Grades -->
+        <div id="gradesTab" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Nilai & Rapor</h3>
+                <button onclick="printReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                    🖨️ Cetak Rapor
+                </button>
+            </div>
+            
+            <!-- Grade Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl text-blue-600">📊</span>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Rata-rata Keseluruhan</h4>
+                        <p class="text-3xl font-bold text-blue-600" id="overallAverage">-</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl text-green-600">🏆</span>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Nilai Tertinggi</h4>
+                        <p class="text-3xl font-bold text-green-600" id="highestGrade">-</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl text-purple-600">📈</span>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Tugas Dinilai</h4>
+                        <p class="text-3xl font-bold text-purple-600" id="gradedCount">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Grades Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tugas</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mata Pelajaran</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dikumpul</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nilai</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Komentar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradesTableBody" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                    <div class="loading mx-auto mb-4"></div>
+                                    Memuat data nilai...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Upload Tugas</h3>
+                <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">×</button>
+            </div>
+            
+            <div class="p-6" id="uploadModalContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignment Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Detail Tugas</h3>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">×</button>
+            </div>
+            
+            <div class="p-6" id="detailModalContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-3 mb-4">
+                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-2 shadow-md">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Kementerian_Agama_new_logo.png/640px-Kementerian_Agama_new_logo.png" alt="Logo Kemenag" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold">MIN SINGKAWANG</h3>
+                        <p class="text-sm text-gray-300">Portal Siswa - Sistem Upload Tugas</p>
+                    </div>
+                </div>
+                <p class="text-gray-400 text-sm">
+                    © 2024 MIN SINGKAWANG. Portal Pengumpulan Tugas untuk Siswa.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let currentStudent = null;
+        let allAssignments = [];
+        let mySubmissions = [];
+        let currentTab = 'assignments';
+
+        // Sample data for demo (integrated with teacher panel)
+        const sampleStudents = [
+            { id: 1, nisn: '1234567890', name: 'Ahmad Rizki', class: '6A', password: 'siswa123' },
+            { id: 2, nisn: '0987654321', name: 'Siti Nurhaliza', class: '6A', password: 'siswa123' },
+            { id: 3, nisn: '1122334455', name: 'Muhammad Fajar', class: '6B', password: 'siswa123' },
+            { id: 4, nisn: '2233445566', name: 'Fatimah Zahra', class: '6B', password: 'siswa123' },
+            { id: 5, nisn: '3344556677', name: 'Ali Akbar', class: '5A', password: 'siswa123' }
+        ];
+
+        const sampleAssignments = [
+            {
+                id: 1,
+                judul: 'Latihan Soal Matematika Bab 5',
+                deskripsi: 'Kerjakan soal-soal latihan pada buku paket halaman 85-90. Tulis jawaban dengan rapi dan sertakan cara penyelesaiannya.',
+                mata_pelajaran: 'Matematika',
+                kelas: '6A',
+                guru: 'Ustadz Ahmad Hidayat',
+                deadline: '2024-12-25T23:59',
+                status: 'active',
+                created_at: '2024-12-15T10:00:00',
+                instructions: 'Kerjakan dengan teliti, tulis nama dan kelas di kertas jawaban'
+            },
+            {
+                id: 2,
+                judul: 'Menulis Karangan Deskripsi',
+                deskripsi: 'Buatlah karangan deskripsi tentang lingkungan sekolah minimal 3 paragraf',
+                mata_pelajaran: 'Bahasa Indonesia',
+                kelas: '6B',
+                guru: 'Ustadzah Siti Khadijah',
+                deadline: '2024-12-28T23:59',
+                status: 'active',
+                created_at: '2024-12-16T09:00:00',
+                instructions: 'Gunakan bahasa yang baik dan benar, minimal 300 kata'
+            },
+            {
+                id: 3,
+                judul: 'Percobaan Sifat-sifat Cahaya',
+                deskripsi: 'Lakukan percobaan sederhana tentang sifat-sifat cahaya dan buat laporan hasil percobaan',
+                mata_pelajaran: 'IPA',
+                kelas: '6A',
+                guru: 'Ustadz Muhammad Yusuf',
+                deadline: '2024-12-30T23:59',
+                status: 'active',
+                created_at: '2024-12-17T08:00:00',
+                instructions: 'Sertakan foto hasil percobaan dan kesimpulan'
+            },
+            {
+                id: 4,
+                judul: 'Sejarah Kerajaan Majapahit',
+                deskripsi: 'Buat ringkasan tentang sejarah Kerajaan Majapahit dalam bentuk mind map atau infografis',
+                mata_pelajaran: 'IPS',
+                kelas: '6B',
+                guru: 'Ustadz Muhammad Yusuf',
+                deadline: '2024-12-22T23:59',
+                status: 'active',
+                created_at: '2024-12-14T14:00:00',
+                instructions: 'Gunakan kertas A4, bisa dibuat tangan atau digital'
+            }
+        ];
+
+        const sampleSubmissions = [
+            {
+                id: 1,
+                assignment_id: 1,
+                student_id: 1,
+                student_name: 'Ahmad Rizki',
+                student_class: '6A',
+                student_nisn: '1234567890',
+                file_name: 'Tugas_Matematika_Ahmad.pdf',
+                file_size: 2048576,
+                file_url: '#',
+                submitted_at: '2024-12-20T14:30:00',
+                status: 'Submitted',
+                grade: null,
+                comment: null,
+                graded_at: null
+            },
+            {
+                id: 2,
+                assignment_id: 1,
+                student_id: 2,
+                student_name: 'Siti Nurhaliza',
+                student_class: '6A',
+                student_nisn: '0987654321',
+                file_name: 'Matematika_Siti.docx',
+                file_size: 1536000,
+                file_url: '#',
+                submitted_at: '2024-12-21T16:45:00',
+                status: 'Graded',
+                grade: 85,
+                comment: 'Bagus, tapi perlu lebih teliti dalam perhitungan',
+                graded_at: '2024-12-22T10:00:00'
+            },
+            {
+                id: 3,
+                assignment_id: 3,
+                student_id: 1,
+                student_name: 'Ahmad Rizki',
+                student_class: '6A',
+                student_nisn: '1234567890',
+                file_name: 'Laporan_IPA_Ahmad.pdf',
+                file_size: 3072000,
+                file_url: '#',
+                submitted_at: '2024-12-19T10:15:00',
+                status: 'Graded',
+                grade: 92,
+                comment: 'Excellent! Percobaan dilakukan dengan baik dan laporan sangat lengkap.',
+                graded_at: '2024-12-20T09:30:00'
+            }
+        ];
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loginModal').style.display = 'flex';
+        });
+
+        // Login function
+        async function login(event) {
+            event.preventDefault();
+            const nisn = document.getElementById('nisnInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (!nisn || !password) {
+                showNotification('Masukkan NISN dan password', 'error');
+                return;
+            }
+
+            // Show loading
+            loginBtn.innerHTML = '<div class="loading mx-auto"></div>';
+            loginBtn.disabled = true;
+
+            try {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Check credentials
+                const student = sampleStudents.find(s => s.nisn === nisn && s.password === password);
+                
+                if (student) {
+                    currentStudent = student;
+                    document.getElementById('loginModal').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    document.getElementById('headerUser').style.display = 'flex';
+                    
+                    // Update header info
+                    document.getElementById('studentName').textContent = currentStudent.name;
+                    document.getElementById('studentClass').textContent = `Kelas ${currentStudent.class} - NISN: ${currentStudent.nisn}`;
+                    
+                    // Load data
+                    loadData();
+                    
+                    showNotification(`Selamat datang, ${currentStudent.name}!`, 'success');
+                } else {
+                    showNotification('NISN atau password salah', 'error');
+                }
+            } catch (error) {
+                showNotification('Terjadi kesalahan. Silakan coba lagi.', 'error');
+            } finally {
+                loginBtn.innerHTML = 'Masuk ke Portal Siswa';
+                loginBtn.disabled = false;
+            }
+        }
+
+        // Load data
+        function loadData() {
+            // Filter assignments by student class
+            allAssignments = sampleAssignments.filter(a => a.kelas === currentStudent.class);
+            
+            // Filter submissions by student
+            mySubmissions = sampleSubmissions.filter(s => s.student_id === currentStudent.id);
+            
+            updateStats();
+            renderAssignments();
+            renderSubmissions();
+            renderGrades();
+            populateFilters();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalAssignments = allAssignments.length;
+            const completedAssignments = mySubmissions.length;
+            const pendingAssignments = totalAssignments - completedAssignments;
+            
+            const gradedSubmissions = mySubmissions.filter(s => s.grade !== null);
+            const averageGrade = gradedSubmissions.length > 0 
+                ? (gradedSubmissions.reduce((sum, s) => sum + s.grade, 0) / gradedSubmissions.length).toFixed(1)
+                : '-';
+            
+            document.getElementById('totalAssignments').textContent = totalAssignments;
+            document.getElementById('completedAssignments').textContent = completedAssignments;
+            document.getElementById('pendingAssignments').textContent = pendingAssignments;
+            document.getElementById('averageGrade').textContent = averageGrade;
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active', 'border-blue-500', 'text-blue-600', 'bg-blue-50');
+                tab.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            event.target.classList.add('active', 'border-blue-500', 'text-blue-600', 'bg-blue-50');
+            event.target.classList.remove('border-transparent', 'text-gray-500');
+            
+            // Show/hide tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+        }
+
+        // Render assignments
+        function renderAssignments() {
+            const container = document.getElementById('assignmentsList');
+            
+            if (allAssignments.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">📚</div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Belum ada tugas</h3>
+                        <p class="text-gray-600">Tugas akan muncul di sini ketika guru memberikan tugas baru.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = allAssignments.map(assignment => {
+                const deadline = new Date(assignment.deadline);
+                const now = new Date();
+                const isOverdue = now > deadline;
+                const submission = mySubmissions.find(s => s.assignment_id === assignment.id);
+                
+                let statusClass = 'active';
+                let statusText = '🟢 Aktif';
+                let actionButton = `<button onclick="openUploadModal(${assignment.id})" class="blue-btn text-white px-4 py-2 rounded-lg">📤 Kumpul Tugas</button>`;
+                
+                if (submission) {
+                    if (submission.grade !== null) {
+                        statusClass = 'graded';
+                        statusText = '🟣 Sudah Dinilai';
+                        actionButton = `<button onclick="viewSubmission(${submission.id})" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">👁️ Lihat Nilai</button>`;
+                    } else {
+                        statusClass = 'submitted';
+                        statusText = '🔵 Sudah Dikumpul';
+                        actionButton = `<button onclick="viewSubmission(${submission.id})" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">✅ Sudah Dikumpul</button>`;
+                    }
+                } else if (isOverdue) {
+                    statusClass = 'overdue';
+                    statusText = '🔴 Terlambat';
+                    actionButton = `<button onclick="openUploadModal(${assignment.id})" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">⚠️ Kumpul Terlambat</button>`;
+                }
+                
+                const timeLeft = deadline - now;
+                const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="assignment-card ${statusClass} bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">${assignment.judul}</h3>
+                                    <span class="status-badge status-${statusClass.replace('active', 'active')}">${statusText}</span>
+                                </div>
+                                <p class="text-gray-600 mb-3">${assignment.deskripsi}</p>
+                                <div class="flex items-center space-x-6 text-sm text-gray-500 mb-4">
+                                    <span class="flex items-center">
+                                        <span class="mr-1">📚</span>
+                                        ${assignment.mata_pelajaran}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <span class="mr-1">👨‍🏫</span>
+                                        ${assignment.guru}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <span class="mr-1">⏰</span>
+                                        ${deadline.toLocaleDateString('id-ID', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </span>
+                                    ${!isOverdue && !submission ? `
+                                        <span class="flex items-center ${daysLeft <= 1 ? 'text-red-600 font-medium' : daysLeft <= 3 ? 'text-yellow-600' : 'text-green-600'}">
+                                            <span class="mr-1">⏳</span>
+                                            ${daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini'}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                ${submission && submission.grade !== null ? `
+                                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium text-purple-800">Nilai Anda:</span>
+                                            <span class="text-2xl font-bold text-purple-600">${submission.grade}</span>
+                                        </div>
+                                        ${submission.comment ? `<p class="text-sm text-purple-700 mt-2">"${submission.comment}"</p>` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="ml-6 flex space-x-2">
+                                <button onclick="viewAssignmentDetail(${assignment.id})" class="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 text-sm">
+                                    📋 Detail
+                                </button>
+                                ${actionButton}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render submissions
+        function renderSubmissions() {
+            const container = document.getElementById('submissionsList');
+            document.getElementById('totalSubmissions').textContent = mySubmissions.length;
+            
+            if (mySubmissions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">📤</div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Belum ada pengumpulan</h3>
+                        <p class="text-gray-600">Riwayat pengumpulan tugas Anda akan muncul di sini.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = mySubmissions.map(submission => {
+                const assignment = allAssignments.find(a => a.id === submission.assignment_id);
+                if (!assignment) return '';
+                
+                const submitDate = new Date(submission.submitted_at);
+                const deadline = new Date(assignment.deadline);
+                const isLate = submitDate > deadline;
+                
+                return `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">${assignment.judul}</h3>
+                                    <span class="status-badge ${submission.grade !== null ? 'status-graded' : 'status-submitted'}">
+                                        ${submission.grade !== null ? '🟣 Sudah Dinilai' : '🔵 Menunggu Penilaian'}
+                                    </span>
+                                </div>
+                                <p class="text-gray-600 mb-3">${assignment.mata_pelajaran} - ${assignment.guru}</p>
+                                <div class="flex items-center space-x-6 text-sm text-gray-500 mb-4">
+                                    <span class="flex items-center">
+                                        <span class="mr-1">📄</span>
+                                        ${submission.file_name}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <span class="mr-1">📅</span>
+                                        ${submitDate.toLocaleDateString('id-ID', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </span>
+                                    <span class="flex items-center ${isLate ? 'text-red-600' : 'text-green-600'}">
+                                        <span class="mr-1">${isLate ? '⚠️' : '✅'}</span>
+                                        ${isLate ? 'Terlambat' : 'Tepat Waktu'}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <span class="mr-1">💾</span>
+                                        ${formatFileSize(submission.file_size)}
+                                    </span>
+                                </div>
+                                ${submission.grade !== null ? `
+                                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm font-medium text-purple-800">Nilai:</span>
+                                            <span class="text-2xl font-bold text-purple-600">${submission.grade}</span>
+                                        </div>
+                                        ${submission.comment ? `
+                                            <div class="border-t border-purple-200 pt-2">
+                                                <p class="text-sm text-purple-700"><strong>Komentar Guru:</strong></p>
+                                                <p class="text-sm text-purple-600 italic">"${submission.comment}"</p>
+                                            </div>
+                                        ` : ''}
+                                        <p class="text-xs text-purple-500 mt-2">
+                                            Dinilai pada: ${new Date(submission.graded_at).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </p>
+                                    </div>
+                                ` : `
+                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                        <p class="text-sm text-blue-800">⏳ Tugas sedang dalam proses penilaian oleh guru</p>
+                                    </div>
+                                `}
+                            </div>
+                            <div class="ml-6">
+                                <button onclick="downloadFile('${submission.file_url}', '${submission.file_name}')" 
+                                        class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 text-sm">
+                                    📥 Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render grades
+        function renderGrades() {
+            const tbody = document.getElementById('gradesTableBody');
+            const gradedSubmissions = mySubmissions.filter(s => s.grade !== null);
+            
+            // Update summary stats
+            if (gradedSubmissions.length > 0) {
+                const grades = gradedSubmissions.map(s => s.grade);
+                const average = (grades.reduce((sum, grade) => sum + grade, 0) / grades.length).toFixed(1);
+                const highest = Math.max(...grades);
+                
+                document.getElementById('overallAverage').textContent = average;
+                document.getElementById('highestGrade').textContent = highest;
+                document.getElementById('gradedCount').textContent = gradedSubmissions.length;
+            } else {
+                document.getElementById('overallAverage').textContent = '-';
+                document.getElementById('highestGrade').textContent = '-';
+                document.getElementById('gradedCount').textContent = '0';
+            }
+            
+            if (gradedSubmissions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            <div class="text-4xl mb-4">📊</div>
+                            Belum ada nilai yang tersedia
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = gradedSubmissions.map(submission => {
+                const assignment = allAssignments.find(a => a.id === submission.assignment_id);
+                if (!assignment) return '';
+                
+                const submitDate = new Date(submission.submitted_at);
+                
+                return `
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">${assignment.judul}</div>
+                            <div class="text-sm text-gray-500">${assignment.guru}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${assignment.mata_pelajaran}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${submitDate.toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                            })}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-2xl font-bold ${submission.grade >= 80 ? 'text-green-600' : submission.grade >= 70 ? 'text-blue-600' : submission.grade >= 60 ? 'text-yellow-600' : 'text-red-600'}">
+                                ${submission.grade}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900 max-w-xs">
+                                ${submission.comment || '-'}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Populate filters
+        function populateFilters() {
+            const subjectFilter = document.getElementById('subjectFilter');
+            const subjects = [...new Set(allAssignments.map(a => a.mata_pelajaran))];
+            
+            subjectFilter.innerHTML = '<option value="">Semua Mata Pelajaran</option>';
+            subjects.forEach(subject => {
+                subjectFilter.innerHTML += `<option value="${subject}">${subject}</option>`;
+            });
+        }
+
+        // Filter assignments
+        function filterAssignments() {
+            const selectedSubject = document.getElementById('subjectFilter').value;
+            const selectedStatus = document.getElementById('statusFilter').value;
+            
+            // Implementation would filter the assignments list
+            renderAssignments();
+        }
+
+        // Open upload modal
+        function openUploadModal(assignmentId) {
+            const assignment = allAssignments.find(a => a.id === assignmentId);
+            const deadline = new Date(assignment.deadline);
+            const now = new Date();
+            const isOverdue = now > deadline;
+            
+            const content = `
+                <form onsubmit="uploadFile(event, ${assignmentId})" class="space-y-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">${assignment.judul}</h4>
+                        <p class="text-sm text-gray-600 mb-2">${assignment.mata_pelajaran} - ${assignment.guru}</p>
+                        <p class="text-sm text-gray-600">Deadline: ${deadline.toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</p>
+                        ${isOverdue ? `
+                            <div class="mt-2 p-2 bg-red-100 border border-red-300 rounded text-sm text-red-700">
+                                ⚠️ Perhatian: Deadline sudah terlewat. Pengumpulan akan dianggap terlambat.
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Upload File Tugas *</label>
+                        <div class="file-upload-area border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer"
+                             onclick="document.getElementById('fileInput').click()"
+                             ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                            <div id="uploadContent">
+                                <div class="text-4xl mb-2">📁</div>
+                                <p class="text-gray-600 mb-2">Klik untuk memilih file atau drag & drop</p>
+                                <p class="text-sm text-gray-500">Format: PDF, DOC, DOCX, JPG, PNG (Max: 10MB)</p>
+                            </div>
+                            <input type="file" id="fileInput" class="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" 
+                                   onchange="handleFileSelect(event)" required>
+                        </div>
+                        <div id="filePreview" class="mt-4 hidden">
+                            <!-- File preview will be shown here -->
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Catatan (Opsional)</label>
+                        <textarea id="submissionNote" rows="3"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Tambahkan catatan atau keterangan untuk guru (opsional)"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeUploadModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-4 py-2 blue-btn text-white rounded-lg">
+                            📤 Kumpulkan Tugas
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            document.getElementById('uploadModalContent').innerHTML = content;
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+
+        // Close upload modal
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+        }
+
+        // Handle file selection
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showFilePreview(file);
+            }
+        }
+
+        // Handle drag and drop
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                document.getElementById('fileInput').files = files;
+                showFilePreview(file);
+            }
+        }
+
+        // Show file preview
+        function showFilePreview(file) {
+            const preview = document.getElementById('filePreview');
+            const uploadContent = document.getElementById('uploadContent');
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification('Ukuran file terlalu besar. Maksimal 10MB.', 'error');
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                showNotification('Format file tidak didukung. Gunakan PDF, DOC, DOCX, JPG, atau PNG.', 'error');
+                return;
+            }
+            
+            uploadContent.innerHTML = `
+                <div class="text-4xl mb-2">✅</div>
+                <p class="text-green-600 font-medium">File siap diupload</p>
+                <p class="text-sm text-gray-500">Klik lagi untuk mengganti file</p>
+            `;
+            
+            preview.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span class="text-blue-600">📄</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-blue-900">${file.name}</p>
+                            <p class="text-xs text-blue-600">${formatFileSize(file.size)}</p>
+                        </div>
+                        <button type="button" onclick="clearFileSelection()" class="text-red-600 hover:text-red-800">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `;
+            preview.classList.remove('hidden');
+        }
+
+        // Clear file selection
+        function clearFileSelection() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.add('hidden');
+            document.getElementById('uploadContent').innerHTML = `
+                <div class="text-4xl mb-2">📁</div>
+                <p class="text-gray-600 mb-2">Klik untuk memilih file atau drag & drop</p>
+                <p class="text-sm text-gray-500">Format: PDF, DOC, DOCX, JPG, PNG (Max: 10MB)</p>
+            `;
+        }
+
+        // Upload file
+        async function uploadFile(event, assignmentId) {
+            event.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const note = document.getElementById('submissionNote').value;
+            
+            if (!fileInput.files[0]) {
+                showNotification('Pilih file yang akan diupload', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            
+            try {
+                // Show loading
+                submitBtn.innerHTML = '<div class="loading mx-auto"></div>';
+                submitBtn.disabled = true;
+                
+                // Simulate file upload
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Create new submission
+                const newSubmission = {
+                    id: Date.now(),
+                    assignment_id: assignmentId,
+                    student_id: currentStudent.id,
+                    student_name: currentStudent.name,
+                    student_class: currentStudent.class,
+                    student_nisn: currentStudent.nisn,
+                    file_name: file.name,
+                    file_size: file.size,
+                    file_url: '#', // In real implementation, this would be the uploaded file URL
+                    submitted_at: new Date().toISOString(),
+                    status: 'Submitted',
+                    grade: null,
+                    comment: null,
+                    graded_at: null,
+                    note: note
+                };
+                
+                mySubmissions.push(newSubmission);
+                
+                closeUploadModal();
+                updateStats();
+                renderAssignments();
+                renderSubmissions();
+                
+                showNotification('Tugas berhasil dikumpulkan!', 'success');
+            } catch (error) {
+                showNotification('Gagal mengupload file. Silakan coba lagi.', 'error');
+            } finally {
+                submitBtn.innerHTML = '📤 Kumpulkan Tugas';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // View assignment detail
+        function viewAssignmentDetail(assignmentId) {
+            const assignment = allAssignments.find(a => a.id === assignmentId);
+            const deadline = new Date(assignment.deadline);
+            const submission = mySubmissions.find(s => s.assignment_id === assignmentId);
+            
+            const content = `
+                <div class="space-y-6">
+                    <div class="bg-blue-50 rounded-lg p-6">
+                        <h3 class="text-xl font-bold text-blue-900 mb-2">${assignment.judul}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-blue-700"><strong>Mata Pelajaran:</strong> ${assignment.mata_pelajaran}</p>
+                                <p class="text-blue-700"><strong>Guru:</strong> ${assignment.guru}</p>
+                                <p class="text-blue-700"><strong>Kelas:</strong> ${assignment.kelas}</p>
+                            </div>
+                            <div>
+                                <p class="text-blue-700"><strong>Deadline:</strong> ${deadline.toLocaleDateString('id-ID', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}</p>
+                                <p class="text-blue-700"><strong>Dibuat:</strong> ${new Date(assignment.created_at).toLocaleDateString('id-ID')}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">📋 Deskripsi Tugas</h4>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-gray-700 leading-relaxed">${assignment.deskripsi}</p>
+                        </div>
+                    </div>
+                    
+                    ${assignment.instructions ? `
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">📝 Petunjuk Pengerjaan</h4>
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <p class="text-yellow-800">${assignment.instructions}</p>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${submission ? `
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">📤 Status Pengumpulan</h4>
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-green-800 font-medium">✅ Sudah Dikumpulkan</span>
+                                    <span class="text-sm text-green-600">${new Date(submission.submitted_at).toLocaleDateString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}</span>
+                                </div>
+                                <p class="text-green-700 text-sm">File: ${submission.file_name}</p>
+                                ${submission.grade !== null ? `
+                                    <div class="mt-3 pt-3 border-t border-green-200">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-green-800 font-medium">Nilai:</span>
+                                            <span class="text-2xl font-bold text-green-600">${submission.grade}</span>
+                                        </div>
+                                        ${submission.comment ? `<p class="text-sm text-green-700 mt-2 italic">"${submission.comment}"</p>` : ''}
+                                    </div>
+                                ` : `
+                                    <p class="text-sm text-green-600 mt-2">⏳ Menunggu penilaian dari guru</p>
+                                `}
+                            </div>
+                        </div>
+                    ` : `
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">📤 Status Pengumpulan</h4>
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p class="text-red-800 font-medium">❌ Belum Dikumpulkan</p>
+                                <p class="text-red-600 text-sm mt-1">Segera kumpulkan tugas Anda sebelum deadline!</p>
+                            </div>
+                        </div>
+                    `}
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button onclick="closeDetailModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                            Tutup
+                        </button>
+                        ${!submission ? `
+                            <button onclick="closeDetailModal(); openUploadModal(${assignmentId})" class="px-4 py-2 blue-btn text-white rounded-lg">
+                                📤 Kumpul Tugas
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('detailModalContent').innerHTML = content;
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+
+        // Close detail modal
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        // View submission
+        function viewSubmission(submissionId) {
+            const submission = mySubmissions.find(s => s.id === submissionId);
+            const assignment = allAssignments.find(a => a.id === submission.assignment_id);
+            
+            if (submission.grade !== null) {
+                showNotification(`Nilai: ${submission.grade}/100 - ${submission.comment || 'Tidak ada komentar'}`, 'success');
+            } else {
+                showNotification('Tugas sedang dalam proses penilaian', 'success');
+            }
+        }
+
+        // Download file
+        function downloadFile(url, filename) {
+            showNotification(`Mengunduh file: ${filename}`, 'success');
+            // In real implementation, this would trigger actual file download
+        }
+
+        // Print report
+        function printReport() {
+            showNotification('Fitur cetak rapor akan segera tersedia', 'success');
+        }
+
+        // Utility functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        function logout() {
+            currentStudent = null;
+            allAssignments = [];
+            mySubmissions = [];
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('headerUser').style.display = 'none';
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('nisnInput').value = '';
+            document.getElementById('passwordInput').value = '';
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96ff28c5d503ce57',t:'MTc1NTMyODcyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
